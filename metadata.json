@@ -1,0 +1,6 @@
+{
+  "name": "Text to Speech Generator",
+  "description": "An advanced Text-to-Speech (TTS) generator using Google Gemini's premium speech model, featuring text enhancement, voice settings, and audio download.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
