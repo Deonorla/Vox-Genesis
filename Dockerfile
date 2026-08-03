@@ -8,8 +8,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Install edge-tts globally
-RUN pip3 install edge-tts
+# Install edge-tts globally (--break-system-packages for Python 3.11+)
+RUN pip3 install --break-system-packages edge-tts
 
 # Set working directory
 WORKDIR /app
