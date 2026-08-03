@@ -1,4 +1,4 @@
-export type TtsEngine = "gemini" | "edge";
+export type TtsEngine = "edge";
 
 export interface Voice {
   id: string;

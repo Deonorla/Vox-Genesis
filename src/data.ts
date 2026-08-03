@@ -1,47 +1,4 @@
-import { Voice, PresetText, TtsEngine } from "./types";
-
-export const VOICES: Voice[] = [
-  {
-    id: "Kore",
-    name: "Kore",
-    gender: "female",
-    traits: ["Calm", "Friendly", "Professional"],
-    description: "Perfect for general explanations, tutorials, narration, and assistant prompts.",
-    sampleText: "Welcome! I can help you read your documents, stories, or announcements clearly."
-  },
-  {
-    id: "Zephyr",
-    name: "Zephyr",
-    gender: "female",
-    traits: ["Soft", "Soothing", "Warm"],
-    description: "Excellent for meditation guides, bedtime stories, ambient narrations, and quiet readings.",
-    sampleText: "Let your mind relax as you listen to this soothing flow of spoken word."
-  },
-  {
-    id: "Puck",
-    name: "Puck",
-    gender: "male",
-    traits: ["Warm", "Expressive", "Conversational"],
-    description: "Great for podcasts, audiobooks, character dialogue, and casual storytelling.",
-    sampleText: "Hey there! I love sharing great stories and bringing ideas to life."
-  },
-  {
-    id: "Charon",
-    name: "Charon",
-    gender: "male",
-    traits: ["Deep", "Authoritative", "Resonant"],
-    description: "Ideal for news broadcasts, documentaries, instructional guides, and formal presentations.",
-    sampleText: "We present a comprehensive overview of the upcoming atmospheric phenomena."
-  },
-  {
-    id: "Fenrir",
-    name: "Fenrir",
-    gender: "male",
-    traits: ["Playful", "Energetic", "Dynamic"],
-    description: "Superb for advertisements, video game characters, alerts, or upbeat announcements.",
-    sampleText: "Are you ready? Let's dive straight into today's exciting updates!"
-  }
-];
+import { Voice, PresetText } from "./types";
 
 export const PRESETS: PresetText[] = [
   {
@@ -241,10 +198,7 @@ export const EDGE_TTS_VOICES: Voice[] = [
   }
 ];
 
-export const TTS_ENGINES = [
-  { id: "gemini" as TtsEngine, label: "Gemini TTS", description: "Google Gemini 3.1 Flash — premium neural voices (requires API key)" },
-  { id: "edge" as TtsEngine, label: "Edge TTS", description: "Microsoft Edge Neural Voices — free, no rate limits, 400+ voices" }
-];
+
 
 export const STYLE_OPTIONS = [
   { value: "", label: "Maintain current style" },

@@ -20,11 +20,13 @@ import {
   ListRestart,
   VolumeX,
   User,
-  Info
+  Info,
+  Menu,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Voice, GeneratedAudio, PresetText, TtsEngine } from "./types";
-import { VOICES, PRESETS, STYLE_OPTIONS, LANGUAGE_OPTIONS, EDGE_TTS_VOICES, TTS_ENGINES } from "./data";
+import { Voice, GeneratedAudio, PresetText } from "./types";
+import { PRESETS, EDGE_TTS_VOICES } from "./data";
 import { getAudioUrlFromBase64, downloadAudioFromBase64 } from "./utils";
 import StoryStudio from "./components/StoryStudio";
 import VoiceCloneStudio from "./components/VoiceCloneStudio";
@@ -32,17 +34,11 @@ import VoiceCloneStudio from "./components/VoiceCloneStudio";
 export default function App() {
   // Main states
   const [activeTab, setActiveTab] = useState<"script" | "story" | "clone">("story"); // Default to the premium Story Architect requested!
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<Voice>(EDGE_TTS_VOICES[0]);
-  const [ttsEngine, setTtsEngine] = useState<TtsEngine>("edge");
+  const [selectedVoice, setSelectedVoice] = useState<Voice>(EDGE_TTS_VOICES.find(v => v.id === "en-US-BrianNeural")!);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  
-  // AI Enhancer configurations
-  const [selectedStyle, setSelectedStyle] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState("original");
-  const [lastEnhancementSummary, setLastEnhancementSummary] = useState<string | null>(null);
 
   // Audio Player states
   const [activeAudio, setActiveAudio] = useState<GeneratedAudio | null>(null);
@@ -59,9 +55,7 @@ export default function App() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [testingVoiceId, setTestingVoiceId] = useState<string | null>(null);
 
-  const geminiVoices = [...VOICES, ...customVoices];
-  const edgeVoices: Voice[] = EDGE_TTS_VOICES;
-  const allVoices = ttsEngine === "edge" ? [...edgeVoices, ...geminiVoices.filter(v => v.isCloned)] : geminiVoices;
+  const allVoices = [...EDGE_TTS_VOICES, ...customVoices.filter(v => v.isCloned)];
 
   // Audio Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -106,7 +100,7 @@ export default function App() {
       console.error("Failed to save custom voices", e);
     }
     if (selectedVoice.id === id) {
-      setSelectedVoice(VOICES[0]);
+      setSelectedVoice(EDGE_TTS_VOICES[0]);
     }
   };
 
@@ -158,51 +152,6 @@ export default function App() {
     setTimeout(() => setErrorMsg(null), 5000);
   };
 
-  // AI Script Enhancement
-  const handleEnhanceText = async () => {
-    if (!inputText.trim()) {
-      showErrorNotification("Please enter or load some text to enhance first.");
-      return;
-    }
-
-    setIsEnhancing(true);
-    setErrorMsg(null);
-    setLastEnhancementSummary(null);
-
-    try {
-      const res = await fetch("/api/enhance-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: inputText,
-          style: selectedStyle,
-          language: selectedLanguage
-        }),
-      });
-
-      if (!res.ok) {
-        let errMsg = "Enhancement failed";
-        try {
-          const errData = await res.json();
-          errMsg = errData.error || errMsg;
-        } catch {}
-        throw new Error(errMsg);
-      }
-
-      const data = await res.json();
-      if (data.enhancedText) {
-        setInputText(data.enhancedText);
-        setLastEnhancementSummary(data.summary || "Refined styling and voice spacing applied.");
-        showSuccessNotification("Script enhanced successfully!");
-      }
-    } catch (err: any) {
-      console.error(err);
-      showErrorNotification(err.message || "Failed to enhance script. Please try again.");
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
-
   // Generate main TTS
   const handleGenerateTTS = async (textToGenerate?: string, targetVoiceId?: string, isSampleTest = false) => {
     const text = textToGenerate || inputText;
@@ -221,11 +170,10 @@ export default function App() {
     setErrorMsg(null);
 
     const selectedVoiceObj = allVoices.find(v => v.id === voiceId);
-    const voiceEngine = selectedVoiceObj?.engine || ttsEngine;
-    const apiVoiceName = selectedVoiceObj?.isCloned ? (selectedVoiceObj.baseVoiceId || "Kore") : voiceId;
+    const apiVoiceName = selectedVoiceObj?.isCloned ? (selectedVoiceObj.baseVoiceId || "en-US-BrianNeural") : voiceId;
 
     try {
-      const apiEndpoint = voiceEngine === "edge" ? "/api/edge-tts" : "/api/tts";
+      const apiEndpoint = "/api/edge-tts";
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -408,48 +356,103 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-base font-display font-bold tracking-tight text-white uppercase tracking-wider">Vox·Genesis</h1>
-              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Premium Gemini TTS Suite</p>
+              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Edge TTS Speech Suite</p>
             </div>
           </div>
 
+          {/* Desktop Controls - Hidden on Mobile */}
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center">
-              {TTS_ENGINES.map((eng) => (
-                <button
-                  key={eng.id}
-                  onClick={() => {
-                    setTtsEngine(eng.id);
-                    // Switch to first voice of the new engine
-                    if (eng.id === "edge") {
-                      setSelectedVoice(EDGE_TTS_VOICES[0]);
-                    } else {
-                      setSelectedVoice(VOICES[0]);
-                    }
-                  }}
-                  className={`px-3 py-1 font-mono text-[10px] border transition-all cursor-pointer ${
-                    ttsEngine === eng.id
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                      : "bg-zinc-900/60 border-zinc-800 text-zinc-500 hover:text-zinc-300"
-                  } ${eng.id === "gemini" ? "rounded-l-lg" : "rounded-r-lg border-l-0"}`}
-                  title={eng.description}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full inline-block mr-1.5" style={{ backgroundColor: ttsEngine === eng.id ? "#34d399" : "#52525b" }} />
-                  {eng.label}
-                </button>
-              ))}
-            </div>
             <div className="text-[10px] text-zinc-600 font-mono hidden md:block">
               UTC: 2026-06-26
             </div>
           </div>
+
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="sm:hidden p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+            title="Open Menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="sm:hidden fixed top-16 left-0 right-0 z-40 bg-[#080808] border-b border-zinc-800 shadow-2xl"
+          >
+            <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
+              {/* Navigation Tabs */}
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider mb-1">Navigation</p>
+                <button
+                  onClick={() => {
+                    setActiveTab("story");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    activeTab === "story"
+                      ? "bg-indigo-500/10 border border-indigo-500/30 text-white"
+                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 text-indigo-400" />
+                  <span className="text-sm font-semibold">Story Architect</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("script");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    activeTab === "script"
+                      ? "bg-indigo-500/10 border border-indigo-500/30 text-white"
+                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                  }`}
+                >
+                  <FileText className="w-4 h-4 text-zinc-400" />
+                  <span className="text-sm font-semibold">Script Studio</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("clone");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
+                    activeTab === "clone"
+                      ? "bg-pink-500/10 border border-pink-500/30 text-white"
+                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                  }`}
+                >
+                  <User className="w-4 h-4 text-pink-400" />
+                  <span className="text-sm font-semibold">Voice Clone Studio</span>
+                </button>
+              </div>
+
+              {/* UTC Time */}
+              <div className="text-[10px] text-zinc-600 font-mono">
+                UTC: {new Date().toISOString().split('T')[0]}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-zinc-800 mb-8 gap-6">
+        {/* Navigation Tabs - Desktop Only */}
+        <div className="hidden sm:flex border-b border-zinc-800 mb-8 gap-6">
           <button
             onClick={() => setActiveTab("story")}
             className={`pb-4 px-1 text-xs font-mono uppercase tracking-widest border-b-2 font-bold cursor-pointer transition-all flex items-center gap-2 ${
@@ -485,6 +488,16 @@ export default function App() {
           </button>
         </div>
 
+        {/* Mobile Active Tab Indicator */}
+        <div className="sm:hidden mb-6">
+          <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900/60 border border-zinc-800 rounded-xl">
+            {activeTab === "story" && <><Sparkles className="w-4 h-4 text-indigo-400" /><span className="text-sm font-semibold text-white">Story Architect</span></>}
+            {activeTab === "script" && <><FileText className="w-4 h-4 text-zinc-400" /><span className="text-sm font-semibold text-white">Script Studio</span></>}
+            {activeTab === "clone" && <><User className="w-4 h-4 text-pink-400" /><span className="text-sm font-semibold text-white">Voice Clone Studio</span></>}
+            <span className="text-[10px] text-zinc-500 font-mono ml-auto">Tap ☰ to switch</span>
+          </div>
+        </div>
+
         {activeTab === "script" && (
           <>
             {/* Intro Hero Section */}
@@ -493,15 +506,15 @@ export default function App() {
                 Convert Text to Natural Speech
               </h2>
               <p className="mt-2 text-sm text-zinc-400 max-w-2xl leading-relaxed">
-                Leverage Google Gemini&apos;s advanced speech model with five curated premium voices. 
-                Refine your text with our built-in AI Voice Director for natural breathing, pacing, and flow.
+                Leverage Microsoft Edge Neural TTS with 400+ premium voices across multiple languages. 
+                Type your script, select a voice, and generate speech instantly.
               </p>
             </div>
 
             {/* Core Layout Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               
-              {/* LEFT SIDE: SCRIPT WRITING & AI DIRECTING */}
+              {/* LEFT SIDE: SCRIPT WRITING */}
               <section className="lg:col-span-7 flex flex-col gap-6">
                 
                 {/* Editor Workspace */}
@@ -557,98 +570,6 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
-                {/* AI VOICE DIRECTOR & TRANSLATOR PANEL */}
-                <div className="bg-[#080808] border border-zinc-800 rounded-2xl shadow-sm p-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl -z-0 opacity-60 pointer-events-none" />
-                  
-              
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-white">AI Voice Director</h3>
-                    <p className="text-xs text-zinc-500">Refine flow, breathing pauses, or translate script</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  {/* Style Refinement */}
-                  <div>
-                    <label className="block text-[10px] font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider font-mono">
-                      Voice Narration Mood
-                    </label>
-                    <select
-                      value={selectedStyle}
-                      onChange={(e) => setSelectedStyle(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
-                    >
-                      {STYLE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-zinc-950 text-zinc-300">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Language Selector */}
-                  <div>
-                    <label className="block text-[10px] font-semibold text-zinc-400 mb-1.5 uppercase tracking-wider font-mono">
-                      Target Language Translation
-                    </label>
-                    <select
-                      value={selectedLanguage}
-                      onChange={(e) => setSelectedLanguage(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
-                    >
-                      {LANGUAGE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value} className="bg-zinc-950 text-zinc-300">
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Director Explanation box */}
-                <div className="bg-zinc-900/60 rounded-xl p-3.5 border border-zinc-800/80 mb-4 text-xs text-zinc-400 leading-relaxed">
-                  <span className="font-semibold text-indigo-400 block mb-1">💡 What does this do?</span>
-                  Gemini will analyze your text, restructure it for clear spoken audio (adding commas/dashes for natural pacing), translate it if requested, and return clean speech-optimized copy.
-                </div>
-
-                {/* Action button */}
-                <button
-                  onClick={handleEnhanceText}
-                  disabled={isEnhancing || !inputText.trim()}
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 py-2.5 px-4 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 border border-zinc-800 hover:border-zinc-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isEnhancing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-zinc-400 border-t-white rounded-full animate-spin" />
-                      Optimizing script with AI Director...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                      Optimize Script for Speech
-                    </>
-                  )}
-                </button>
-
-                {/* Show last summary */}
-                {lastEnhancementSummary && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-xs text-indigo-300"
-                  >
-                    <span className="font-bold">Director Adjustments:</span> {lastEnhancementSummary}
-                  </motion.div>
-                )}
-              </div>
-            </div>
 
           </section>
 
@@ -1007,7 +928,7 @@ export default function App() {
       {/* Footer */}
       <footer className="border-t border-zinc-800 bg-[#080808] mt-16 py-8 text-center text-[10px] text-zinc-600 uppercase tracking-widest font-mono">
         <div className="max-w-7xl mx-auto px-4">
-          <p>© 2026 VoxGenesis Speech Generator. Synthesized via premium Google Gemini audio models.</p>
+          <p>© 2026 VoxGenesis Speech Generator. Powered by Microsoft Edge Neural TTS.</p>
         </div>
       </footer>
     </div>

@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Voice } from "../types";
-import { VOICES } from "../data";
+import { EDGE_TTS_VOICES } from "../data";
 
 interface VoiceCloneStudioProps {
   customVoices: Voice[];
@@ -68,7 +68,7 @@ export default function VoiceCloneStudio({
 
   // Synchronize base voice selection when gender changes to prevent mismatch
   useEffect(() => {
-    const defaultVoiceForGender = VOICES.find(v => v.gender === gender);
+    const defaultVoiceForGender = EDGE_TTS_VOICES.find(v => v.gender === gender);
     if (defaultVoiceForGender) {
       setBaseVoiceId(defaultVoiceForGender.id);
     }
@@ -355,7 +355,7 @@ export default function VoiceCloneStudio({
                     onChange={(e) => setBaseVoiceId(e.target.value)}
                     className="w-full bg-[#040404] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-pink-500/40 cursor-pointer"
                   >
-                    {VOICES.filter(v => v.gender === gender).map(v => (
+                    {EDGE_TTS_VOICES.filter(v => v.gender === gender).map(v => (
                       <option key={v.id} value={v.id} className="bg-zinc-950 text-zinc-300">
                         {v.name} Base ({v.traits.slice(0, 2).join(", ")})
                       </option>

@@ -26,7 +26,7 @@ import {
   ArrowDown
 } from "lucide-react";
 import { Story, StoryBlock, Voice } from "../types";
-import { VOICES } from "../data";
+import { EDGE_TTS_VOICES } from "../data";
 import { 
   getAudioUrlFromBase64, 
   decodeBase64ToAudioBuffer, 
@@ -104,7 +104,7 @@ const DEFAULT_STORY_SEEDS: Story[] = [
   }
 ];
 
-export default function StoryStudio({ allVoices = VOICES, onNotify }: StoryStudioProps) {
+export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: StoryStudioProps) {
   // Stories storage state
   const [stories, setStories] = useState<Story[]>([]);
   const [activeStoryId, setActiveStoryId] = useState<string>("");
@@ -322,8 +322,8 @@ export default function StoryStudio({ allVoices = VOICES, onNotify }: StoryStudi
     const newBlock: StoryBlock = {
       id: "block_" + Date.now(),
       text: "",
-      voiceId: "Kore",
-      voiceName: "Kore",
+      voiceId: "en-US-BrianNeural",
+      voiceName: "Brian",
       trimStart: 0,
       trimEnd: 0
     };
@@ -404,10 +404,9 @@ export default function StoryStudio({ allVoices = VOICES, onNotify }: StoryStudi
 
     try {
       const voiceObj = allVoices.find(v => v.id === block.voiceId);
-      const voiceEngine = voiceObj?.engine || "gemini";
-      const apiVoiceName = voiceObj?.isCloned ? (voiceObj.baseVoiceId || "Kore") : block.voiceId;
+      const apiVoiceName = voiceObj?.isCloned ? (voiceObj.baseVoiceId || "en-US-BrianNeural") : block.voiceId;
 
-      const apiEndpoint = voiceEngine === "edge" ? "/api/edge-tts" : "/api/tts";
+      const apiEndpoint = "/api/edge-tts";
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
