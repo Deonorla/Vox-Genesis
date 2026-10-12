@@ -55,6 +55,9 @@ Click **"Add Environment Variable"** and add:
 | NAME | VALUE | Purpose |
 |------|-------|---------|
 | `APP_URL` | `https://voxgenesis.onrender.com` | Your app's URL (add after deployment) |
+| `AZURE_SPEECH_KEY` | *(recommended)* | Azure Speech key — enables automatic fallback when Microsoft breaks the free Edge TTS endpoint (get it from Azure Portal → Speech service → Keys & Endpoint; free tier F0 = 500K chars/month) |
+| `AZURE_SPEECH_REGION` | e.g. `westus` | Region of the Azure Speech resource |
+| `EDGE_TTS_DISABLED` | `true` (optional) | Skip edge-tts entirely and always use Azure — useful during an outage |
 
 ---
 
@@ -157,6 +160,7 @@ To disable auto-deploy:
 - Verify Python and edge-tts installed in Docker build
 - Check runtime logs for permission errors
 - Ensure `edge-tts` is in the container's PATH
+- **Recurring upstream outages**: Microsoft periodically breaks the free Edge Read-Aloud endpoint that `edge-tts` uses (most recently Oct 10, 2026 — see [edge-tts#490](https://github.com/rany2/edge-tts/issues/490)). If logs show `WSServerHandshakeError: 403`, it is NOT your deploy — it is upstream. Set `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION` to enable the automatic Azure Speech fallback, and/or set `EDGE_TTS_DISABLED=true` to force all traffic through Azure while the outage lasts. When the fix ships upstream, redeploy with **Clear build cache & deploy** so the Docker build picks up the new edge-tts version (the `pip3 install edge-tts` layer is cached).
 
 ### Service Returns 502/503
 - Check that the app listens on `0.0.0.0` (your server.ts does this)
