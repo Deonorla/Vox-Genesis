@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Story, StoryBlock, Voice } from "../types";
 import { EDGE_TTS_VOICES } from "../data";
+import Dropdown from "./Dropdown";
 import { 
   getAudioUrlFromBase64, 
   decodeBase64ToAudioBuffer, 
@@ -791,7 +792,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-140px)] pb-64 sm:pb-48 lg:pb-44">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-140px)] pb-72 sm:pb-56 lg:pb-52">
       
       {/* LEFT SIDEBAR: STORIES INDEX */}
       <div className="lg:col-span-3 bg-white border border-ink/5 rounded-2xl shadow-sm p-4 flex flex-col gap-4">
@@ -1019,22 +1020,21 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                           <div className="w-7 h-7 rounded-lg bg-cream-dark border border-ink/8 flex items-center justify-center text-gold">
                             <Volume2 className="w-3.5 h-3.5" />
                           </div>
-                          <select
+                          <Dropdown
+                            size="sm"
                             value={block.voiceId}
-                            onChange={(e) => {
-                              const v = allVoices.find(v => v.id === e.target.value);
+                            ariaLabel="Segment voice"
+                            onChange={(val) => {
+                              const v = allVoices.find(v => v.id === val);
                               if (v) {
                                 handleUpdateBlock(block.id, { voiceId: v.id, voiceName: v.name });
                               }
                             }}
-                            className="bg-white border border-ink/10 rounded-full px-3 py-2 text-xs text-ink focus:outline-none cursor-pointer"
-                          >
-                            {allVoices.map(v => (
-                              <option key={v.id} value={v.id} className="bg-white text-ink">
-                                {v.name} ({v.gender === "female" ? "F" : "M"})
-                              </option>
-                            ))}
-                          </select>
+                            options={allVoices.map(v => ({
+                              value: v.id,
+                              label: `${v.name} (${v.gender === "female" ? "F" : "M"})`
+                            }))}
+                          />
                         </div>
 
                         {/* Speech Clip Stats */}
@@ -1165,7 +1165,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                     {/* Quick Play & Synthesize controls */}
                     <div className="flex md:flex-col items-stretch gap-2 w-full md:w-32 self-stretch justify-center md:border-l border-ink/8 md:pl-4">
                       {isSynthesizing ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-ink/45 text-[10px] font-black uppercase tracking-[0.15em] py-2 bg-cream-light rounded-xl border border-ink/5">
+                        <div className="flex-1 md:flex-none flex flex-col items-center justify-center text-ink/45 text-[10px] font-black uppercase tracking-[0.15em] py-2 bg-cream-light rounded-xl border border-ink/5">
                           <Loader2 className="w-4 h-4 animate-spin text-gold mb-1" />
                           <span>Rendering...</span>
                         </div>
@@ -1173,7 +1173,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                         <>
                           <button
                             onClick={() => handlePlayBlockClip(block)}
-                            className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                            className={`flex-1 md:flex-none py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                               isTesting
                                 ? "bg-ink text-cream border-ink"
                                 : "bg-white text-ink/55 border-ink/10 hover:border-ink/30 hover:text-ink"
@@ -1202,7 +1202,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                       ) : (
                         <button
                           onClick={() => handleGenerateBlockSpeech(block)}
-                          className="flex-1 bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase py-3 px-3 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
+                          className="flex-1 md:flex-none bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase py-3 px-3 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
                           Synthesize
@@ -1310,11 +1310,13 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                 <div className="absolute left-5 top-6 bottom-0 right-5 flex items-stretch py-2.5">
                   {segments.map((segment, idx) => {
                     const isPlayingSegment = timelineCurrentTime >= segment.start && timelineCurrentTime < (segment.start + segment.duration);
+                    // Too narrow to render readable labels — show waveform only
+                    const showLabels = segment.duration * zoomFactor >= 44;
                     return (
                       <div
                         key={segment.blockId}
                         style={{ width: `${segment.duration * zoomFactor}px` }}
-                        className={`h-full border-r border-ink/15 flex flex-col justify-between p-2 relative overflow-hidden transition-all ${
+                        className={`h-full border-r border-ink/15 flex flex-col gap-1 p-1.5 relative overflow-hidden transition-all ${
                           isPlayingSegment
                             ? "bg-rose/40 border-y border-rose-dark/40"
                             : segment.isTrimmed
@@ -1322,28 +1324,37 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                             : "bg-ink/10 border-y border-ink/15"
                         }`}
                       >
-                        {/* Segment Voice Name & Index */}
-                        <div className="flex items-center justify-between relative z-10">
-                          <span className={`text-[9px] font-bold truncate ${isPlayingSegment ? "text-rose-dark" : "text-ink/70"}`}>
-                            {idx + 1}. {segment.voiceName}
-                          </span>
-                          <span className="text-[8px] font-mono text-ink/40">
-                            {segment.duration.toFixed(1)}s
-                          </span>
-                        </div>
+                        {/* Segment Voice Name & Index — hidden when too narrow to read */}
+                        {showLabels && (
+                          <div className="flex items-center justify-between gap-1 relative z-10">
+                            <span className={`text-[9px] font-bold truncate min-w-0 ${isPlayingSegment ? "text-rose-dark" : "text-ink/70"}`}>
+                              {idx + 1}. {segment.voiceName}
+                            </span>
+                            <span className="flex items-center gap-1 shrink-0">
+                              {segment.isTrimmed && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-gold" title="Trimming applied" />
+                              )}
+                              <span className="text-[8px] font-mono text-ink/40">
+                                {segment.duration.toFixed(1)}s
+                              </span>
+                            </span>
+                          </div>
+                        )}
 
-                        {/* Segment Text preview snippet */}
-                        <p className="text-[8px] text-ink/50 truncate relative z-10">
-                          {segment.text || "Empty speech block"}
-                        </p>
-
-                        {/* Trim visual indicator: if trimmed, render small tag */}
-                        {segment.isTrimmed && (
+                        {/* Trim visual indicator for label-less narrow segments */}
+                        {!showLabels && segment.isTrimmed && (
                           <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-gold" title="Trimming applied" />
                         )}
 
-                        {/* Waveform graphic inside block segment */}
-                        <div className="absolute bottom-1.5 left-2 right-2 h-2 flex items-end gap-[1px] pointer-events-none opacity-40">
+                        {/* Segment Text preview snippet */}
+                        {showLabels && (
+                          <p className="text-[8px] text-ink/50 truncate relative z-10 min-w-0">
+                            {segment.text || "Empty speech block"}
+                          </p>
+                        )}
+
+                        {/* Waveform graphic — in-flow at the bottom so text never overlaps it */}
+                        <div className="h-2 flex items-end gap-[1px] pointer-events-none opacity-40 mt-auto shrink-0">
                           {Array.from({ length: Math.ceil(segment.duration * 3) }).map((_, i) => (
                             <div 
                               key={i} 

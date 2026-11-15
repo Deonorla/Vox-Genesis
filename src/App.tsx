@@ -29,14 +29,14 @@ import LandingPage, { Session } from "./components/LandingPage";
 const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
 
 const TABS = [
-  { id: "story" as const, label: "Story Architect", short: "Story", icon: Sparkles },
   { id: "script" as const, label: "Script Studio", short: "Script", icon: FileText },
+  { id: "story" as const, label: "Story Architect", short: "Story", icon: Sparkles },
   { id: "clone" as const, label: "Voice Clone Studio", short: "Clone", icon: User },
 ];
 
 export default function App() {
-  // Main states
-  const [activeTab, setActiveTab] = useState<"script" | "story" | "clone">("story"); // Default to the premium Story Architect requested!
+  // Main states — Script Studio opens first (header order)
+  const [activeTab, setActiveTab] = useState<"script" | "story" | "clone">("script");
   const [inputText, setInputText] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<Voice>(EDGE_TTS_VOICES.find(v => v.id === "en-US-BrianNeural")!);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
@@ -88,7 +88,7 @@ export default function App() {
       console.error("Failed to clear session", e);
     }
     setSession(null);
-    setActiveTab("story");
+    setActiveTab("script");
     window.scrollTo({ top: 0 });
   };
 
@@ -457,7 +457,7 @@ export default function App() {
       </header>
 
       {/* ── Main ───────────────────────────────────────────────────────── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-16 pb-16 sm:pb-24">
 
         {/* Desktop tab rail */}
         <div className="hidden sm:flex items-end justify-between border-b border-ink/8 mb-8 gap-6">
@@ -1013,87 +1013,6 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* ── Footer ─────────────────────────────────────────────────────── */}
-      <footer className="bg-cream-dark border-t border-ink/8 text-ink mt-16 sm:mt-24 pt-14 pb-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-ink/8">
-            {/* Brand */}
-            <div className="col-span-2 md:col-span-1 max-w-xs">
-              <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-7 h-7 rounded-full bg-ink text-cream flex items-center justify-center">
-                  <Volume2 size={14} />
-                </span>
-                <span className="font-display text-xs font-black tracking-[0.2em] uppercase">
-                  Vox·Genesis
-                </span>
-              </div>
-              <p className="text-xs text-ink/45 leading-relaxed">
-                Editorial-grade speech synthesis for scripts, stories, and custom voices.
-              </p>
-            </div>
-
-            {/* Studios (functional) */}
-            <div>
-              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
-                Studios
-              </p>
-              <ul className="space-y-2.5">
-                {TABS.map(tab => (
-                  <li key={tab.id}>
-                    <button
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="text-xs text-ink/55 hover:text-ink transition-colors cursor-pointer"
-                    >
-                      {tab.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Engine */}
-            <div>
-              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
-                Engine
-              </p>
-              <ul className="space-y-2.5 text-xs text-ink/55">
-                <li>Edge Neural TTS</li>
-                <li>Azure Speech fallback</li>
-                <li>Web Audio merging</li>
-              </ul>
-            </div>
-
-            {/* Formats */}
-            <div>
-              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
-                Formats
-              </p>
-              <ul className="space-y-2.5 text-xs text-ink/55">
-                <li>MP3 input · 24 kHz mono</li>
-                <li>WAV master export</li>
-                <li>Per-block trimming</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-[10px] text-ink/35 text-center sm:text-left">
-              © {new Date().getFullYear()} VoxGenesis Speech Generator
-              {session ? ` · Signed in as ${session.name}` : ""}
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-dark" />
-              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-ink/40">
-                Powered by Microsoft Edge Neural TTS
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

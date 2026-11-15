@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Voice } from "../types";
 import { EDGE_TTS_VOICES } from "../data";
+import Dropdown from "./Dropdown";
 
 interface VoiceCloneStudioProps {
   customVoices: Voice[];
@@ -348,17 +349,15 @@ export default function VoiceCloneStudio({
                   <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                     Acoustic Carrier Profile
                   </label>
-                  <select
+                  <Dropdown
                     value={baseVoiceId}
-                    onChange={(e) => setBaseVoiceId(e.target.value)}
-                    className="w-full bg-white border border-ink/10 rounded-full px-4 py-2.5 text-sm text-ink focus:outline-none cursor-pointer"
-                  >
-                    {EDGE_TTS_VOICES.filter(v => v.gender === gender).map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} Base ({v.traits.slice(0, 2).join(", ")})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setBaseVoiceId}
+                    ariaLabel="Acoustic carrier profile"
+                    options={EDGE_TTS_VOICES.filter(v => v.gender === gender).map(v => ({
+                      value: v.id,
+                      label: `${v.name} Base (${v.traits.slice(0, 2).join(", ")})`
+                    }))}
+                  />
                 </div>
 
               </div>
