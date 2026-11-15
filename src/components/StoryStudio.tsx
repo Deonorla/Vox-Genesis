@@ -7,10 +7,8 @@ import {
   Download, 
   Scissors, 
   Volume2, 
-  VolumeX, 
   History, 
   GripVertical, 
-  ChevronRight, 
   Search, 
   Edit3, 
   Check, 
@@ -21,7 +19,6 @@ import {
   ZoomOut,
   Sparkles,
   RefreshCw,
-  Clock,
   ArrowUp,
   ArrowDown
 } from "lucide-react";
@@ -794,76 +791,77 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-140px)] pb-36">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-140px)] pb-64 sm:pb-48 lg:pb-44">
       
       {/* LEFT SIDEBAR: STORIES INDEX */}
-      <div className="lg:col-span-3 bg-zinc-950 border border-zinc-800 rounded-2xl p-4 flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
-            <History className="w-4 h-4 text-indigo-400" />
+      <div className="lg:col-span-3 bg-white border border-ink/5 rounded-2xl shadow-sm p-4 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 flex items-center gap-2">
+            <History className="w-3.5 h-3.5 text-gold" />
             Story Manuscripts
           </h2>
           <button
             onClick={handleCreateStory}
-            className="p-1.5 rounded-lg bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-600 hover:text-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase px-3.5 py-2.5 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer shrink-0"
             title="Create New Story"
           >
             <Plus className="w-3.5 h-3.5" />
+            New
           </button>
         </div>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-500" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink/30 pointer-events-none" />
           <input
             type="text"
             placeholder="Search stories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#050505] border border-zinc-800 rounded-xl pl-9 pr-4 py-2 text-xs text-zinc-300 placeholder-zinc-650 focus:outline-none focus:border-indigo-500/50"
+            className="w-full bg-cream/70 border border-ink/10 rounded-full pl-9 pr-4 py-2.5 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all"
           />
         </div>
 
-        {/* Stories Listing */}
-        <div className="flex-1 overflow-y-auto max-h-[300px] lg:max-h-[500px] space-y-2 pr-1 scrollbar-thin">
+        {/* Stories Listing — horizontal snap rail on mobile, vertical scroll list on desktop */}
+        <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x lg:block lg:max-h-[520px] lg:overflow-y-auto lg:overflow-x-hidden lg:space-y-2 lg:scrollbar-thin">
           {filteredStories.map((story) => {
             const isActive = story.id === activeStoryId;
             return (
               <div
                 key={story.id}
                 onClick={() => setActiveStoryId(story.id)}
-                className={`group p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                className={`group p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 min-w-[240px] shrink-0 snap-start lg:min-w-0 lg:w-full ${
                   isActive
-                    ? "border-indigo-500/40 bg-indigo-500/10 text-white"
-                    : "border-zinc-900 bg-[#080808]/40 hover:border-zinc-800 hover:bg-[#080808] text-zinc-400"
+                    ? "border-ink/25 bg-cream-light shadow-sm"
+                    : "border-ink/8 bg-white hover:border-ink/20 hover:bg-cream/60"
                 }`}
               >
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold truncate group-hover:text-white transition-colors">
+                  <h4 className="text-xs font-bold text-ink truncate">
                     {story.title}
                   </h4>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-500 px-1.5 py-0.5 rounded font-mono">
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <span className="text-[8px] font-black uppercase tracking-[0.18em] bg-cream-dark text-ink/45 border border-ink/8 px-1.5 py-0.5 rounded-full">
                       {story.blocks.length} {story.blocks.length === 1 ? 'segment' : 'segments'}
                     </span>
-                    <span className="text-[9px] text-zinc-600 font-mono">
+                    <span className="text-[10px] font-mono text-ink/35">
                       {story.updatedAt}
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={(e) => handleDeleteStory(story.id, e)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
+                  className="p-2 rounded-full text-ink/30 hover:text-red-500 hover:bg-cream-dark transition-all cursor-pointer shrink-0 lg:opacity-0 lg:group-hover:opacity-100"
                   title="Delete Story"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             );
           })}
 
           {filteredStories.length === 0 && (
-            <div className="py-8 text-center text-zinc-600 text-xs">
+            <div className="py-8 text-center text-ink/35 text-xs lg:w-full">
               No stories match your search.
             </div>
           )}
@@ -875,7 +873,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
         
         {/* STORY HEADER PANEL */}
         {activeStory ? (
-          <div className="bg-[#080808] border border-zinc-800 rounded-2xl p-5 flex flex-col gap-4">
+          <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex-1 min-w-0">
                 {isRenaming ? (
@@ -885,12 +883,13 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                       value={renameTitle}
                       onChange={(e) => setRenameTitle(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleRenameStory()}
-                      className="bg-zinc-900 border border-indigo-500/40 text-sm font-bold rounded-xl px-3 py-1.5 text-white w-full focus:outline-none"
+                      className="w-full bg-cream/70 border border-ink/10 rounded-full px-4 py-2.5 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all"
                       autoFocus
                     />
                     <button
                       onClick={handleRenameStory}
-                      className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-ink text-cream flex items-center justify-center hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer shrink-0"
+                      title="Save Title"
                     >
                       <Check className="w-4 h-4" />
                     </button>
@@ -899,26 +898,27 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                         setIsRenaming(false);
                         setRenameTitle(activeStory.title);
                       }}
-                      className="p-1.5 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 cursor-pointer"
+                      className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-ink hover:border-ink/30 transition-all cursor-pointer shrink-0"
+                      title="Cancel Rename"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <h1 className="text-lg sm:text-xl font-serif italic text-white truncate">
+                    <h1 className="text-lg sm:text-xl font-display font-black italic text-ink truncate">
                       {activeStory.title}
                     </h1>
                     <button
                       onClick={() => setIsRenaming(true)}
-                      className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors cursor-pointer"
+                      className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-ink hover:border-ink/30 transition-all cursor-pointer shrink-0"
                       title="Rename Story"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 )}
-                <p className="text-[10px] text-zinc-500 font-mono mt-1 uppercase tracking-wider">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mt-2">
                   Story Mode • {activeStory.blocks.length} speech components configured
                 </p>
               </div>
@@ -926,7 +926,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
               <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={handleAddBlock}
-                  className="text-xs bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all hover:scale-[1.01] cursor-pointer"
+                  className="bg-white border border-ink/10 text-ink/55 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 hover:border-ink/30 hover:text-ink transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add segment
@@ -934,7 +934,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                 <button
                   onClick={handleSynthesizeAll}
                   disabled={isSynthesizingAll}
-                  className="text-xs bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all hover:scale-[1.01] disabled:opacity-50 cursor-pointer"
+                  className="bg-white border border-ink/10 text-ink/55 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 hover:border-ink/30 hover:text-ink transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-40"
                 >
                   {isSynthesizingAll ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -946,7 +946,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                 <button
                   onClick={handleExportMergedAudio}
                   disabled={isMerging}
-                  className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-indigo-500/10 hover:scale-[1.01] disabled:opacity-50 cursor-pointer uppercase font-mono tracking-wider"
+                  className="bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase px-4 py-2.5 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
                 >
                   {isMerging ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -973,20 +973,20 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                     onDragStart={(e) => handleDragStart(e, index)}
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, index)}
-                    className={`bg-zinc-900/30 border rounded-2xl p-4 transition-all flex flex-col md:flex-row gap-4 items-start ${
+                    className={`bg-white border rounded-2xl p-4 transition-all flex flex-col md:flex-row gap-4 items-start shadow-sm ${
                       draggedIndex === index
-                        ? "border-dashed border-indigo-500 bg-indigo-500/5 opacity-50"
-                        : "border-zinc-800 hover:border-zinc-700 bg-zinc-950/20"
+                        ? "border-dashed border-gold bg-gold/5 opacity-50"
+                        : "border-ink/10 hover:border-ink/25"
                     }`}
                   >
                     
                     {/* Drag Handle & Ordering controls */}
-                    <div className="flex md:flex-col items-center gap-2 self-stretch justify-between md:justify-center border-b md:border-b-0 md:border-r border-zinc-800/80 pb-3 md:pb-0 md:pr-4">
+                    <div className="flex md:flex-col items-center gap-2 self-stretch justify-between md:justify-center border-b md:border-b-0 md:border-r border-ink/8 pb-3 md:pb-0 md:pr-4">
                       <div className="flex items-center gap-2">
-                        <div className="cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400 p-1 rounded hover:bg-zinc-900">
+                        <div className="cursor-grab active:cursor-grabbing text-ink/35 hover:text-ink p-1.5 rounded-lg hover:bg-cream-dark transition-colors">
                           <GripVertical className="w-4 h-4" />
                         </div>
-                        <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                        <span className="text-[10px] font-mono text-ink/45 bg-cream-dark px-1.5 py-0.5 rounded-full border border-ink/8">
                           #{index + 1}
                         </span>
                       </div>
@@ -996,18 +996,18 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                         <button
                           onClick={() => handleMoveUp(index)}
                           disabled={index === 0}
-                          className="p-1 rounded text-zinc-600 hover:text-zinc-300 disabled:opacity-30 cursor-pointer"
+                          className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-ink hover:border-ink/30 transition-all cursor-pointer disabled:opacity-30"
                           title="Move Segment Up"
                         >
-                          <ArrowUp className="w-3 h-3" />
+                          <ArrowUp className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleMoveDown(index)}
                           disabled={index === activeStory.blocks.length - 1}
-                          className="p-1 rounded text-zinc-600 hover:text-zinc-300 disabled:opacity-30 cursor-pointer"
+                          className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-ink hover:border-ink/30 transition-all cursor-pointer disabled:opacity-30"
                           title="Move Segment Down"
                         >
-                          <ArrowDown className="w-3 h-3" />
+                          <ArrowDown className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1016,7 +1016,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                     <div className="flex-1 space-y-3 w-full">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-indigo-400">
+                          <div className="w-7 h-7 rounded-lg bg-cream-dark border border-ink/8 flex items-center justify-center text-gold">
                             <Volume2 className="w-3.5 h-3.5" />
                           </div>
                           <select
@@ -1027,10 +1027,10 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                                 handleUpdateBlock(block.id, { voiceId: v.id, voiceName: v.name });
                               }
                             }}
-                            className="bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-xs text-zinc-300 font-medium focus:outline-none cursor-pointer"
+                            className="bg-white border border-ink/10 rounded-full px-3 py-2 text-xs text-ink focus:outline-none cursor-pointer"
                           >
                             {allVoices.map(v => (
-                              <option key={v.id} value={v.id} className="bg-zinc-950 text-zinc-300">
+                              <option key={v.id} value={v.id} className="bg-white text-ink">
                                 {v.name} ({v.gender === "female" ? "F" : "M"})
                               </option>
                             ))}
@@ -1040,18 +1040,18 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                         {/* Speech Clip Stats */}
                         <div className="flex items-center gap-2">
                           {hasAudio ? (
-                            <span className="text-[10px] text-zinc-500 font-mono">
+                            <span className="text-[10px] font-mono text-ink/40">
                               Duration: {buffer.duration.toFixed(1)}s 
                               {block.trimEnd && block.trimEnd < buffer.duration ? ` (Trimmed to ${(block.trimEnd - block.trimStart).toFixed(1)}s)` : ""}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-zinc-600 font-mono">
+                            <span className="text-[10px] font-mono text-ink/35">
                               No voice generated yet
                             </span>
                           )}
                           <button
                             onClick={() => handleDeleteBlock(block.id)}
-                            className="p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
+                            className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-red-500 hover:border-red-200 transition-all cursor-pointer"
                             title="Delete Clip segment"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1065,20 +1065,20 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                         onChange={(e) => handleUpdateBlock(block.id, { text: e.target.value })}
                         placeholder="Type narration or dialog for this voice track..."
                         rows={2}
-                        className="w-full bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-zinc-700 resize-y"
+                        className="w-full bg-cream/70 border border-ink/10 rounded-2xl px-4 py-3 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all resize-y"
                       />
 
                       {/* Trimming & Visual Wave cutting Panel */}
                       {hasAudio && (
-                        <div className="border border-zinc-850 bg-[#050505]/40 rounded-xl p-3 space-y-2">
-                          <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                            <span className="flex items-center gap-1">
-                              <Scissors className="w-3.5 h-3.5 text-indigo-400" />
+                        <div className="border border-ink/5 bg-cream-light rounded-xl p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-ink/45">
+                            <span className="flex items-center gap-1.5">
+                              <Scissors className="w-3.5 h-3.5 text-gold" />
                               Visual Wave Cut / Segment Trimming
                             </span>
                             <button
                               onClick={() => handleUpdateBlock(block.id, { trimStart: 0, trimEnd: buffer.duration })}
-                              className="text-indigo-400 hover:text-indigo-300"
+                              className="text-[10px] font-black uppercase tracking-[0.15em] text-gold hover:text-ink transition-colors cursor-pointer shrink-0"
                             >
                               Reset Slices
                             </button>
@@ -1087,7 +1087,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                           {/* Interactive Trim Dual Sliders */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                             <div>
-                              <div className="flex justify-between text-[9px] font-mono text-zinc-500 mb-1">
+                              <div className="flex justify-between text-[9px] font-mono text-ink/40 mb-1">
                                 <span>Trim start:</span>
                                 <span>{block.trimStart.toFixed(2)}s</span>
                               </div>
@@ -1103,12 +1103,12 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                                     trimStart: Math.min(val, block.trimEnd - 0.1) 
                                   });
                                 }}
-                                className="w-full accent-indigo-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-gold h-1 bg-ink/10 rounded-lg appearance-none cursor-pointer"
                               />
                             </div>
 
                             <div>
-                              <div className="flex justify-between text-[9px] font-mono text-zinc-500 mb-1">
+                              <div className="flex justify-between text-[9px] font-mono text-ink/40 mb-1">
                                 <span>Trim end:</span>
                                 <span>{(block.trimEnd || buffer.duration).toFixed(2)}s</span>
                               </div>
@@ -1124,20 +1124,20 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                                     trimEnd: Math.max(val, block.trimStart + 0.1) 
                                   });
                                 }}
-                                className="w-full accent-indigo-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
+                                className="w-full accent-gold h-1 bg-ink/10 rounded-lg appearance-none cursor-pointer"
                               />
                             </div>
                           </div>
 
                           {/* Waveform Slicing Preview Visualizer */}
-                          <div className="h-6 bg-[#030303] rounded border border-zinc-900 relative overflow-hidden flex items-center">
+                          <div className="h-6 bg-cream-dark rounded border border-ink/8 relative overflow-hidden flex items-center">
                             {/* Trim region visual overlay */}
                             <div 
-                              className="absolute h-full bg-zinc-900 border-r border-zinc-800"
+                              className="absolute h-full bg-ink/10 border-r border-ink/10"
                               style={{ width: `${(block.trimStart / buffer.duration) * 100}%` }}
                             />
                             <div 
-                              className="absolute h-full bg-zinc-900 border-l border-zinc-800"
+                              className="absolute h-full bg-ink/10 border-l border-ink/10"
                               style={{ 
                                 left: `${((block.trimEnd || buffer.duration) / buffer.duration) * 100}%`,
                                 right: 0
@@ -1145,14 +1145,14 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                             />
                             
                             {/* Simulated waveform bars */}
-                            <div className="absolute inset-0 flex items-center justify-around px-2 pointer-events-none opacity-45">
+                            <div className="absolute inset-0 flex items-center justify-around px-2 pointer-events-none">
                               {Array.from({ length: 40 }).map((_, i) => {
                                 const active = (i / 40) >= (block.trimStart / buffer.duration) && (i / 40) <= ((block.trimEnd || buffer.duration) / buffer.duration);
                                 return (
                                   <div
                                     key={i}
                                     style={{ height: `${20 + Math.sin(i * 0.4) * 50}%` }}
-                                    className={`w-[2px] rounded-full ${active ? "bg-indigo-400" : "bg-zinc-800"}`}
+                                    className={`w-[2px] rounded-full ${active ? "bg-gold" : "bg-ink/15"}`}
                                   />
                                 );
                               })}
@@ -1163,20 +1163,20 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                     </div>
 
                     {/* Quick Play & Synthesize controls */}
-                    <div className="flex md:flex-col items-stretch gap-2 w-full md:w-32 self-stretch justify-center md:border-l border-zinc-800/80 md:pl-4">
+                    <div className="flex md:flex-col items-stretch gap-2 w-full md:w-32 self-stretch justify-center md:border-l border-ink/8 md:pl-4">
                       {isSynthesizing ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-xs font-mono py-2 bg-zinc-900/65 rounded-xl border border-zinc-800">
-                          <Loader2 className="w-4 h-4 animate-spin text-indigo-400 mb-1" />
+                        <div className="flex-1 flex flex-col items-center justify-center text-ink/45 text-[10px] font-black uppercase tracking-[0.15em] py-2 bg-cream-light rounded-xl border border-ink/5">
+                          <Loader2 className="w-4 h-4 animate-spin text-gold mb-1" />
                           <span>Rendering...</span>
                         </div>
                       ) : hasAudio ? (
                         <>
                           <button
                             onClick={() => handlePlayBlockClip(block)}
-                            className={`flex-1 py-2 rounded-xl text-xs font-semibold font-mono flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                            className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                               isTesting
-                                ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/10"
-                                : "bg-zinc-900 hover:bg-zinc-850 text-zinc-300 border-zinc-800"
+                                ? "bg-ink text-cream border-ink"
+                                : "bg-white text-ink/55 border-ink/10 hover:border-ink/30 hover:text-ink"
                             }`}
                           >
                             {isTesting ? (
@@ -1186,14 +1186,14 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                               </>
                             ) : (
                               <>
-                                <Play className="w-3 h-3 fill-current text-indigo-400" />
+                                <Play className="w-3 h-3 fill-current" />
                                 Listen
                               </>
                             )}
                           </button>
                           <button
                             onClick={() => handleGenerateBlockSpeech(block)}
-                            className="py-1.5 text-[10px] text-zinc-500 hover:text-indigo-400 font-mono flex items-center justify-center gap-1 cursor-pointer"
+                            className="py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-ink/40 hover:text-gold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <RefreshCw className="w-3 h-3" />
                             Regenerate
@@ -1202,7 +1202,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                       ) : (
                         <button
                           onClick={() => handleGenerateBlockSpeech(block)}
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                          className="flex-1 bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase py-3 px-3 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5"
                         >
                           <Sparkles className="w-3.5 h-3.5" />
                           Synthesize
@@ -1216,15 +1216,15 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
             </div>
           </div>
         ) : (
-          <div className="bg-[#080808] border border-zinc-800 rounded-2xl p-12 text-center text-zinc-500 flex flex-col items-center justify-center">
-            <Music className="w-12 h-12 text-zinc-800 mb-3 animate-pulse" />
-            <h3 className="text-base font-bold text-white mb-1">No Story Active</h3>
-            <p className="text-sm text-zinc-650 max-w-sm">
+          <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-12 text-center flex flex-col items-center justify-center">
+            <Music className="w-12 h-12 text-ink/15 mb-3 animate-pulse" />
+            <h3 className="text-base font-display font-black italic text-ink mb-1">No Story Active</h3>
+            <p className="text-sm text-ink/45 max-w-sm">
               Create a new story manuscript or select an existing outline from the sidebar to begin crafting multi-voice narratives.
             </p>
             <button
               onClick={handleCreateStory}
-              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
+              className="mt-5 bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase px-4 py-2.5 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] cursor-pointer"
             >
               + Create Manuscript
             </button>
@@ -1233,23 +1233,24 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
 
         {/* BOTTOM MASTER TIMELINE VIEW & PLAYBACK BAR */}
         {activeStory && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#060606]/95 border-t border-zinc-800 p-4 sm:p-5 shadow-[0_-15px_30px_rgba(0,0,0,0.8)] backdrop-blur-md">
-            <div className="max-w-7xl mx-auto flex flex-col gap-4">
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-ink/10 text-ink shadow-[0_-8px_30px_rgba(30,27,24,0.06)] p-4 sm:p-5">
+            <div className="max-w-7xl mx-auto flex flex-col gap-4 pb-[env(safe-area-inset-bottom)]">
             
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-ink/8 pb-3">
               <div className="flex items-center gap-2">
-                <Music className="w-4 h-4 text-indigo-400" />
-                <span className="text-[11px] uppercase font-bold font-mono tracking-wider text-zinc-400">
+                <Music className="w-4 h-4 text-gold" />
+                <span className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
                   Master Multi-Voice Output Timeline
                 </span>
               </div>
               
-              {/* Zoom slider */}
-              <div className="flex items-center gap-2.5">
-                <span className="text-[10px] text-zinc-500 font-mono">Zoom:</span>
+              {/* Zoom slider (hidden on the smallest screens to avoid crowding) */}
+              <div className="hidden sm:flex items-center gap-2.5">
+                <span className="text-[10px] font-mono text-ink/40">Zoom:</span>
                 <button 
                   onClick={() => setZoomFactor(prev => Math.max(10, prev - 5))}
-                  className="p-1 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 cursor-pointer"
+                  className="w-9 h-9 rounded-full border border-ink/15 bg-white flex items-center justify-center text-ink/50 hover:text-ink hover:border-ink/40 transition-all cursor-pointer"
+                  title="Zoom Out"
                 >
                   <ZoomOut className="w-3.5 h-3.5" />
                 </button>
@@ -1260,11 +1261,12 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                   step="5"
                   value={zoomFactor}
                   onChange={(e) => setZoomFactor(parseInt(e.target.value))}
-                  className="w-16 accent-indigo-500 h-1 bg-zinc-800 rounded"
+                  className="w-16 accent-gold h-1 bg-ink/10 rounded cursor-pointer"
                 />
                 <button 
                   onClick={() => setZoomFactor(prev => Math.min(80, prev + 5))}
-                  className="p-1 rounded bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-400 cursor-pointer"
+                  className="w-9 h-9 rounded-full border border-ink/15 bg-white flex items-center justify-center text-ink/50 hover:text-ink hover:border-ink/40 transition-all cursor-pointer"
+                  title="Zoom In"
                 >
                   <ZoomIn className="w-3.5 h-3.5" />
                 </button>
@@ -1272,7 +1274,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
             </div>
 
             {/* TIMELINE TRACK */}
-            <div className="relative bg-[#050505] border border-zinc-850 rounded-xl h-24 overflow-x-auto overflow-y-hidden scrollbar-thin select-none">
+            <div className="relative bg-cream-dark border border-ink/8 rounded-xl h-24 overflow-x-auto overflow-y-hidden scrollbar-thin select-none">
               
               {/* Actual timeline scroll window container */}
               <div 
@@ -1286,14 +1288,14 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                 }}
               >
                 {/* 20px leading timeline spacing */}
-                <div className="absolute left-0 top-0 bottom-0 w-5 bg-zinc-950/20" />
+                <div className="absolute left-0 top-0 bottom-0 w-5 bg-cream/60" />
 
                 {/* Timeline time rule markings */}
-                <div className="absolute left-5 right-5 top-0 h-4 border-b border-zinc-900 flex items-end">
+                <div className="absolute left-5 right-5 top-0 h-4 border-b border-ink/8 flex items-end">
                   {Array.from({ length: Math.ceil(timelineDuration) + 2 }).map((_, i) => (
                     <div 
                       key={i} 
-                      className="absolute bottom-0 border-l border-zinc-800 text-[8px] text-zinc-600 font-mono pl-1"
+                      className="absolute bottom-0 border-l border-ink/15 text-[8px] text-ink/40 font-mono pl-1"
                       style={{ 
                         left: `${i * zoomFactor}px`,
                         height: i % 5 === 0 ? "8px" : "4px" 
@@ -1312,40 +1314,40 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                       <div
                         key={segment.blockId}
                         style={{ width: `${segment.duration * zoomFactor}px` }}
-                        className={`h-full border-r border-zinc-950 flex flex-col justify-between p-2 relative overflow-hidden transition-all ${
+                        className={`h-full border-r border-ink/15 flex flex-col justify-between p-2 relative overflow-hidden transition-all ${
                           isPlayingSegment
-                            ? "bg-indigo-600/20 border-y border-indigo-500/30"
+                            ? "bg-rose/40 border-y border-rose-dark/40"
                             : segment.isTrimmed
-                            ? "bg-zinc-900/40 border-y border-zinc-900/50"
-                            : "bg-zinc-900/80 border-y border-zinc-850/30"
+                            ? "bg-ink/5 border-y border-ink/10"
+                            : "bg-ink/10 border-y border-ink/15"
                         }`}
                       >
                         {/* Segment Voice Name & Index */}
                         <div className="flex items-center justify-between relative z-10">
-                          <span className={`text-[9px] font-bold truncate ${isPlayingSegment ? "text-indigo-300" : "text-zinc-400"}`}>
+                          <span className={`text-[9px] font-bold truncate ${isPlayingSegment ? "text-rose-dark" : "text-ink/70"}`}>
                             {idx + 1}. {segment.voiceName}
                           </span>
-                          <span className="text-[8px] font-mono text-zinc-600">
+                          <span className="text-[8px] font-mono text-ink/40">
                             {segment.duration.toFixed(1)}s
                           </span>
                         </div>
 
                         {/* Segment Text preview snippet */}
-                        <p className="text-[8px] text-zinc-500 truncate relative z-10">
+                        <p className="text-[8px] text-ink/50 truncate relative z-10">
                           {segment.text || "Empty speech block"}
                         </p>
 
                         {/* Trim visual indicator: if trimmed, render small tag */}
                         {segment.isTrimmed && (
-                          <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-500" title="Trimming applied" />
+                          <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-gold" title="Trimming applied" />
                         )}
 
                         {/* Waveform graphic inside block segment */}
-                        <div className="absolute bottom-1.5 left-2 right-2 h-2 flex items-end gap-[1px] pointer-events-none opacity-20">
+                        <div className="absolute bottom-1.5 left-2 right-2 h-2 flex items-end gap-[1px] pointer-events-none opacity-40">
                           {Array.from({ length: Math.ceil(segment.duration * 3) }).map((_, i) => (
                             <div 
                               key={i} 
-                              className={`flex-1 rounded-full ${isPlayingSegment ? "bg-indigo-400" : "bg-zinc-600"}`}
+                              className={`flex-1 rounded-full ${isPlayingSegment ? "bg-gold" : "bg-ink/25"}`}
                               style={{ height: `${20 + (i % 3 === 0 ? 80 : i % 2 === 0 ? 50 : 30)}%` }}
                             />
                           ))}
@@ -1355,21 +1357,21 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                   })}
 
                   {segments.length === 0 && (
-                    <div className="w-full flex items-center justify-center text-xs text-zinc-600">
+                    <div className="w-full flex items-center justify-center text-xs text-ink/35">
                       Synthesize story segments to visualize track waves
                     </div>
                   )}
                 </div>
 
-                {/* SCROLLING YELLOW PLAYBACK PROGRESS CURSOR */}
+                {/* SCROLLING ROSE PLAYBACK PROGRESS CURSOR */}
                 {timelineDuration > 0 && (
                   <div 
-                    className="absolute top-0 bottom-0 w-[2px] bg-amber-400 z-20 pointer-events-none"
+                    className="absolute top-0 bottom-0 w-[2px] bg-rose-dark z-20 pointer-events-none"
                     style={{ 
                       left: `${20 + timelineCurrentTime * zoomFactor}px` 
                     }}
                   >
-                    <div className="w-2.5 h-2.5 bg-amber-400 rounded-full -translate-x-[4px] shadow" />
+                    <div className="w-2.5 h-2.5 bg-rose-dark rounded-full -translate-x-[4px] shadow" />
                   </div>
                 )}
 
@@ -1377,52 +1379,52 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
             </div>
 
             {/* TIMELINE CONTROLS BAR */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#050505] border border-zinc-850 rounded-xl px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-ink/10 rounded-xl px-4 py-3">
               
               {/* Play / Pause / stop and time indicators */}
               <div className="flex items-center gap-3">
                 <button
                   onClick={startGlobalPlayback}
-                  className="w-9 h-9 rounded-full bg-white text-black hover:bg-zinc-150 flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-ink text-cream hover:bg-rose hover:text-ink flex items-center justify-center transition-all hover:scale-105 active:scale-95 cursor-pointer"
                   title={isGlobalPlaying ? "Pause Sequencer" : "Play Sequencer"}
                 >
                   {isGlobalPlaying ? (
-                    <Pause className="w-4.5 h-4.5 fill-current text-black" />
+                    <Pause className="w-4 h-4 fill-current" />
                   ) : (
-                    <Play className="w-4.5 h-4.5 fill-current text-black ml-0.5" />
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
                   )}
                 </button>
 
                 <button
                   onClick={stopGlobalPlayback}
-                  className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                  className="w-9 h-9 rounded-full border border-ink/15 text-ink/55 hover:border-ink/40 hover:text-ink flex items-center justify-center transition-all cursor-pointer"
                   title="Stop Playback"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
 
                 {/* Time displays */}
-                <div className="flex items-center gap-1.5 font-mono text-xs text-zinc-400 pl-2">
-                  <span className="text-white font-bold">
+                <div className="flex items-center gap-1.5 font-mono text-xs text-ink/50 pl-2">
+                  <span className="text-ink font-bold">
                     {Math.floor(timelineCurrentTime / 60)}:{(timelineCurrentTime % 60).toFixed(1).toString().padStart(4, "0")}
                   </span>
-                  <span className="text-zinc-600">/</span>
-                  <span className="text-zinc-500">
+                  <span className="text-ink/30">/</span>
+                  <span className="text-ink/50">
                     {Math.floor(timelineDuration / 60)}:{(timelineDuration % 60).toFixed(1).toString().padStart(4, "0")}
                   </span>
                 </div>
               </div>
 
               {/* Status updates */}
-              <div className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider hidden md:block">
+              <div className="text-[9px] font-black uppercase tracking-[0.25em] text-ink/40 hidden md:block">
                 {isGlobalPlaying ? "Playing Master Feed..." : "Master Sequencer Ready"}
               </div>
 
               {/* Quick Action Buttons */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={handleAddBlock}
-                  className="text-xs bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all hover:scale-[1.01] cursor-pointer"
+                  className="bg-white border border-ink/15 text-ink/60 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 flex items-center gap-1.5 hover:border-ink/40 hover:text-ink transition-all cursor-pointer"
                   title="Add new segment to story"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -1431,7 +1433,7 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                 <button
                   onClick={handleExportMergedAudio}
                   disabled={isMerging}
-                  className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-indigo-500/10 hover:scale-[1.01] disabled:opacity-50 cursor-pointer font-mono tracking-wider"
+                  className="bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase px-4 py-2.5 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] disabled:opacity-40 cursor-pointer flex items-center gap-1.5"
                   title="Export merged audio as WAV"
                 >
                   {isMerging ? (
@@ -1441,15 +1443,6 @@ export default function StoryStudio({ allVoices = EDGE_TTS_VOICES, onNotify }: S
                   )}
                   Export
                 </button>
-              </div>
-
-              {/* Master Volume Indicator mock */}
-              <div className="flex items-center gap-2">
-                <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
-                <div className="w-20 bg-zinc-800 h-1 rounded overflow-hidden">
-                  <div className="bg-indigo-500 h-full w-[80%]" />
-                </div>
-                <span className="text-[10px] font-mono text-zinc-500">80%</span>
               </div>
 
             </div>

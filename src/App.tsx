@@ -1,28 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Volume2, 
-  Sparkles, 
-  Play, 
-  Pause, 
-  Download, 
-  Trash2, 
-  Clock, 
-  History, 
-  HelpCircle, 
-  FileText, 
-  ChevronRight, 
-  Check, 
-  Languages, 
-  Plus, 
-  ArrowRight,
+import {
+  Volume2,
+  Sparkles,
+  Play,
+  Pause,
+  Download,
+  Trash2,
+  History,
+  FileText,
+  Check,
   Music,
-  Maximize2,
-  ListRestart,
   VolumeX,
   User,
-  Info,
-  Menu,
-  X
+  ChevronDown,
+  Loader2,
+  ListRestart,
+  LogOut
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Voice, GeneratedAudio, PresetText } from "./types";
@@ -30,15 +23,28 @@ import { PRESETS, EDGE_TTS_VOICES } from "./data";
 import { getAudioUrlFromBase64, downloadAudioFromBase64 } from "./utils";
 import StoryStudio from "./components/StoryStudio";
 import VoiceCloneStudio from "./components/VoiceCloneStudio";
+import LandingPage, { Session } from "./components/LandingPage";
+
+/** Join class names, dropping falsy values. */
+const cx = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(" ");
+
+const TABS = [
+  { id: "story" as const, label: "Story Architect", short: "Story", icon: Sparkles },
+  { id: "script" as const, label: "Script Studio", short: "Script", icon: FileText },
+  { id: "clone" as const, label: "Voice Clone Studio", short: "Clone", icon: User },
+];
 
 export default function App() {
   // Main states
   const [activeTab, setActiveTab] = useState<"script" | "story" | "clone">("story"); // Default to the premium Story Architect requested!
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [inputText, setInputText] = useState("");
   const [selectedVoice, setSelectedVoice] = useState<Voice>(EDGE_TTS_VOICES.find(v => v.id === "en-US-BrianNeural")!);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Header / picker presentation states
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isVoicePickerOpen, setIsVoicePickerOpen] = useState(false);
 
   // Audio Player states
   const [activeAudio, setActiveAudio] = useState<GeneratedAudio | null>(null);
@@ -55,10 +61,49 @@ export default function App() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [testingVoiceId, setTestingVoiceId] = useState<string | null>(null);
 
+  // Session (localStorage only — no backend/database)
+  const [session, setSession] = useState<Session | null>(() => {
+    try {
+      const raw = localStorage.getItem("vox_session");
+      return raw ? (JSON.parse(raw) as Session) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleLogin = (s: Session) => {
+    try {
+      localStorage.setItem("vox_session", JSON.stringify(s));
+    } catch (e) {
+      console.error("Failed to save session", e);
+    }
+    setSession(s);
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("vox_session");
+    } catch (e) {
+      console.error("Failed to clear session", e);
+    }
+    setSession(null);
+    setActiveTab("story");
+    window.scrollTo({ top: 0 });
+  };
+
   const allVoices = [...EDGE_TTS_VOICES, ...customVoices.filter(v => v.isCloned)];
 
   // Audio Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Track header scroll state (hairline + blur once the page moves)
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Load history and custom voices from local storage on mount
   useEffect(() => {
@@ -305,9 +350,16 @@ export default function App() {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  const selectedVoiceObj = allVoices.find(v => v.id === selectedVoice.id) || selectedVoice;
+
+  // Gate: no local session → landing page with login
+  if (!session) {
+    return <LandingPage onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="min-h-screen bg-[#050505] text-[#D1D1D1] font-sans antialiased selection:bg-indigo-500/25 selection:text-indigo-200">
-      
+    <div className="min-h-screen bg-cream text-ink font-sans antialiased">
+
       {/* Hidden audio element for logic */}
       {activeAudioUrl && (
         <audio
@@ -322,613 +374,724 @@ export default function App() {
       {/* Floating Notifications */}
       <AnimatePresence>
         {successMsg && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-[#080808] text-white text-sm px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 border border-zinc-800"
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-[60] bg-white border border-ink/10 rounded-full shadow-xl shadow-ink/10 px-4 py-2.5 flex items-center gap-2.5 max-w-[92vw] sm:max-w-md"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{successMsg}</span>
+            <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+            <span className="text-xs font-semibold text-ink truncate">{successMsg}</span>
           </motion.div>
         )}
         {errorMsg && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-red-950 text-red-200 text-sm px-5 py-3 rounded-lg shadow-2xl flex items-center gap-2 max-w-md border border-red-900/40"
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-4 sm:top-6 left-1/2 -translate-x-1/2 z-[60] bg-white border border-rose-dark/30 rounded-2xl shadow-xl shadow-ink/10 px-4 py-3 flex items-center gap-2.5 max-w-[92vw] sm:max-w-md"
           >
-            <div className="text-white p-1 rounded-full bg-red-900/50">
-              <Info className="w-4 h-4 text-red-400" />
-            </div>
-            <span>{errorMsg}</span>
+            <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+            <span className="text-xs font-semibold text-ink leading-snug">{errorMsg}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header Grid */}
-      <header className="border-b border-zinc-800 bg-[#080808] sticky top-0 z-10 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-              <Volume2 className="w-4.5 h-4.5" />
-            </div>
-            <div>
-              <h1 className="text-base font-display font-bold tracking-tight text-white uppercase tracking-wider">Vox·Genesis</h1>
-              <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Edge TTS Speech Suite</p>
-            </div>
-          </div>
-
-          {/* Desktop Controls - Hidden on Mobile */}
-          <div className="flex items-center gap-4">
-            <div className="text-[10px] text-zinc-600 font-mono hidden md:block">
-              UTC: 2026-06-26
-            </div>
-          </div>
-
-          {/* Mobile Hamburger Button */}
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <header
+        className={cx(
+          "fixed top-0 inset-x-0 z-50 transition-all duration-300",
+          isScrolled
+            ? "bg-cream/95 backdrop-blur-xl border-b border-ink/8 shadow-sm"
+            : "bg-cream/80 backdrop-blur-md border-b border-transparent"
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="sm:hidden p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
-            title="Open Menu"
+            onClick={() => {
+              setActiveTab("story");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="flex items-center gap-2.5 group shrink-0"
           >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            <span className="w-8 h-8 rounded-full bg-ink text-cream flex items-center justify-center shadow-lg shadow-ink/15 group-hover:bg-gold transition-colors">
+              <Volume2 className="w-4 h-4" />
+            </span>
+            <span className="flex flex-col items-start leading-none">
+              <span className="font-display font-black text-[13px] sm:text-sm tracking-[0.18em] uppercase text-ink">
+                Vox·Genesis
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-black tracking-[0.35em] uppercase text-ink/40 mt-1">
+                Speech Suite
+              </span>
+            </span>
           </button>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 bg-white border border-ink/8 rounded-full px-3 py-1.5 text-[9px] font-black tracking-[0.2em] uppercase text-ink/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Edge Neural TTS
+            </span>
+            {session && (
+              <span className="hidden lg:inline-flex items-center gap-2 bg-white border border-ink/8 rounded-full pl-1.5 pr-3 py-1">
+                <span className="w-6 h-6 rounded-full bg-gold text-cream flex items-center justify-center font-display font-black text-[11px]">
+                  {session.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[10px] font-bold text-ink/65 max-w-[110px] truncate">
+                  {session.name}
+                </span>
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              aria-label="Sign out"
+              className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-rose-dark hover:border-ink/30 transition-all cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="sm:hidden fixed top-16 left-0 right-0 z-40 bg-[#080808] border-b border-zinc-800 shadow-2xl"
-          >
-            <div className="max-w-7xl mx-auto px-4 py-4 space-y-4">
-              {/* Navigation Tabs */}
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider mb-1">Navigation</p>
-                <button
-                  onClick={() => {
-                    setActiveTab("story");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
-                    activeTab === "story"
-                      ? "bg-indigo-500/10 border border-indigo-500/30 text-white"
-                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
-                  <span className="text-sm font-semibold">Story Architect</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab("script");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
-                    activeTab === "script"
-                      ? "bg-indigo-500/10 border border-indigo-500/30 text-white"
-                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
-                  }`}
-                >
-                  <FileText className="w-4 h-4 text-zinc-400" />
-                  <span className="text-sm font-semibold">Script Studio</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab("clone");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all cursor-pointer ${
-                    activeTab === "clone"
-                      ? "bg-pink-500/10 border border-pink-500/30 text-white"
-                      : "bg-zinc-900/40 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"
-                  }`}
-                >
-                  <User className="w-4 h-4 text-pink-400" />
-                  <span className="text-sm font-semibold">Voice Clone Studio</span>
-                </button>
-              </div>
+      {/* ── Main ───────────────────────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-16">
 
-              {/* UTC Time */}
-              <div className="text-[10px] text-zinc-600 font-mono">
-                UTC: {new Date().toISOString().split('T')[0]}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Navigation Tabs - Desktop Only */}
-        <div className="hidden sm:flex border-b border-zinc-800 mb-8 gap-6">
-          <button
-            onClick={() => setActiveTab("story")}
-            className={`pb-4 px-1 text-xs font-mono uppercase tracking-widest border-b-2 font-bold cursor-pointer transition-all flex items-center gap-2 ${
-              activeTab === "story"
-                ? "border-indigo-500 text-white"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            Story Architect
-          </button>
-          <button
-            onClick={() => setActiveTab("script")}
-            className={`pb-4 px-1 text-xs font-mono uppercase tracking-widest border-b-2 font-bold cursor-pointer transition-all flex items-center gap-2 ${
-              activeTab === "script"
-                ? "border-indigo-500 text-white"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            <FileText className="w-4 h-4 text-zinc-400" />
-            Script Studio
-          </button>
-          <button
-            onClick={() => setActiveTab("clone")}
-            className={`pb-4 px-1 text-xs font-mono uppercase tracking-widest border-b-2 font-bold cursor-pointer transition-all flex items-center gap-2 ${
-              activeTab === "clone"
-                ? "border-pink-500 text-white"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            <User className="w-4 h-4 text-pink-400" />
-            Voice Clone Studio
-          </button>
+        {/* Desktop tab rail */}
+        <div className="hidden sm:flex items-end justify-between border-b border-ink/8 mb-8 gap-6">
+          <div className="flex gap-6 lg:gap-8">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cx(
+                    "pb-4 px-1 text-[10px] font-black uppercase tracking-[0.25em] border-b-2 transition-all flex items-center gap-2 cursor-pointer",
+                    isActive
+                      ? "border-ink text-ink"
+                      : "border-transparent text-ink/35 hover:text-ink/75"
+                  )}
+                >
+                  <Icon className={cx("w-3.5 h-3.5", isActive ? "text-gold" : "")} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <span className="pb-4 text-[9px] font-black tracking-[0.25em] uppercase text-ink/25 hidden lg:block">
+            Multi-voice studio · 400+ neural voices
+          </span>
         </div>
 
-        {/* Mobile Active Tab Indicator */}
-        <div className="sm:hidden mb-6">
-          <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900/60 border border-zinc-800 rounded-xl">
-            {activeTab === "story" && <><Sparkles className="w-4 h-4 text-indigo-400" /><span className="text-sm font-semibold text-white">Story Architect</span></>}
-            {activeTab === "script" && <><FileText className="w-4 h-4 text-zinc-400" /><span className="text-sm font-semibold text-white">Script Studio</span></>}
-            {activeTab === "clone" && <><User className="w-4 h-4 text-pink-400" /><span className="text-sm font-semibold text-white">Voice Clone Studio</span></>}
-            <span className="text-[10px] text-zinc-500 font-mono ml-auto">Tap ☰ to switch</span>
+        {/* Mobile segmented tabs (sticky under header) */}
+        <div className="sm:hidden sticky top-14 z-40 -mx-4 px-4 pt-3 pb-2.5 bg-cream/95 backdrop-blur-xl border-b border-ink/8 mb-6">
+          <div className="grid grid-cols-3 gap-1.5 bg-cream-dark/80 border border-ink/8 rounded-full p-1">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cx(
+                    "flex items-center justify-center gap-1.5 rounded-full py-2.5 text-[9px] font-black tracking-[0.14em] uppercase transition-all cursor-pointer",
+                    isActive
+                      ? "bg-ink text-cream shadow-md shadow-ink/15"
+                      : "text-ink/45 hover:text-ink"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.short}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {activeTab === "script" && (
-          <>
-            {/* Intro Hero Section */}
-            <div className="mb-8">
-              <h2 className="text-3xl sm:text-4xl font-serif italic text-white leading-tight">
-                Convert Text to Natural Speech
-              </h2>
-              <p className="mt-2 text-sm text-zinc-400 max-w-2xl leading-relaxed">
-                Leverage Microsoft Edge Neural TTS with 400+ premium voices across multiple languages. 
-                Type your script, select a voice, and generate speech instantly.
-              </p>
-            </div>
-
-            {/* Core Layout Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              
-              {/* LEFT SIDE: SCRIPT WRITING */}
-              <section className="lg:col-span-7 flex flex-col gap-6">
-                
-                {/* Editor Workspace */}
-                <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl shadow-sm overflow-hidden backdrop-blur-xs">
-                  <div className="p-4 border-b border-zinc-800 flex items-center justify-between flex-wrap gap-2 bg-[#080808]/80">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-indigo-400" />
-                      <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider font-mono">
-                        Script Studio
-                      </span>
-                    </div>
-                    
-                    {/* Clear script option */}
-                    {inputText && (
-                      <button 
-                        onClick={() => setInputText("")}
-                        className="text-xs text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1 font-medium cursor-pointer"
-                      >
-                        <ListRestart className="w-3.5 h-3.5" />
-                        Reset Editor
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Presets Row */}
-                  <div className="px-4 py-2 border-b border-zinc-800 flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none bg-[#080808]/40">
-                    <span className="text-xs text-zinc-500 font-mono flex-none">Templates:</span>
-                    {PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handleLoadPreset(p)}
-                        className="text-xs bg-zinc-900 hover:bg-indigo-500/10 hover:text-indigo-400 px-3 py-1.5 rounded-full text-zinc-400 font-medium transition-all flex-none border border-zinc-800 hover:border-indigo-500/30 cursor-pointer"
-                      >
-                        {p.title}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Text Area Input */}
-                  <div className="relative">
-                    <textarea
-                      value={inputText}
-                      onChange={(e) => setInputText(e.target.value)}
-                      placeholder="Begin typing your manuscript here..."
-                      rows={8}
-                      className="w-full p-5 text-zinc-300 placeholder-zinc-650 focus:outline-none text-base leading-relaxed resize-y border-none bg-transparent"
-                      maxLength={1000}
-                    />
-                    
-                    {/* Character Counter */}
-                    <div className="absolute bottom-3 right-4 font-mono text-[10px] text-zinc-500 bg-[#080808]/90 px-2 py-0.5 rounded border border-zinc-800">
-                      {inputText.length} / 1000 CHARACTERS
-                    </div>
-                  </div>
+        {/* Tab content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {activeTab === "script" && (
+              <>
+                {/* Editorial hero */}
+                <div className="mb-8 sm:mb-10 max-w-3xl">
+                  <p className="text-[10px] font-black tracking-[0.4em] uppercase text-gold mb-3">
+                    Script Studio
+                  </p>
+                  <h1 className="font-display font-black text-ink leading-[0.95] tracking-tight text-[clamp(2rem,5.5vw,3.5rem)]">
+                    Convert text into{" "}
+                    <em className="italic text-gold">natural speech.</em>
+                  </h1>
+                  <p className="mt-4 text-sm sm:text-base text-ink/55 leading-relaxed max-w-xl">
+                    Leverage Microsoft Edge Neural TTS with 400+ premium voices across multiple
+                    languages. Type your script, pick a voice, and generate speech instantly.
+                  </p>
                 </div>
 
-          </section>
+                {/* Core layout grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-          {/* RIGHT SIDE: VOICE CONTROLS, OUTPUT, HISTORIES */}
-          <section className="lg:col-span-5 flex flex-col gap-6">
-            
-            {/* VOICE SELECTION */}
-            <div className="bg-[#080808] border border-zinc-800 rounded-2xl shadow-sm p-5">
-              <h3 className="text-[11px] uppercase tracking-[0.15em] text-zinc-500 mb-4 font-mono">
-                Voice Architecture
-              </h3>
-
-              <div className="flex flex-col gap-3">
-                {allVoices.map((voice) => {
-                  const isSelected = selectedVoice.id === voice.id;
-                  const isTesting = testingVoiceId === voice.id;
-
-                  return (
-                    <div
-                      key={voice.id}
-                      onClick={() => setSelectedVoice(voice)}
-                      className={`group border rounded-xl p-4 transition-all cursor-pointer relative ${
-                        isSelected 
-                          ? "border-indigo-500/30 bg-indigo-500/10 text-white" 
-                          : "border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 text-zinc-400"
-                      }`}
-                    >
-                      {/* Flex header */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                            isSelected ? "bg-indigo-600 text-white" : "bg-zinc-800 text-zinc-400"
-                          }`}>
-                            {voice.id.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className={`text-sm font-bold ${isSelected ? "text-white" : "text-zinc-200"}`}>{voice.name}</span>
-                              <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded font-bold tracking-wider ${
-                                voice.gender === 'female' ? "bg-pink-500/10 text-pink-400 border border-pink-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                              }`}>
-                                {voice.gender}
-                              </span>
-                            </div>
-                            {/* Traits badges */}
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {voice.traits.map(t => (
-                                <span key={t} className="text-[9px] bg-zinc-950 text-zinc-500 border border-zinc-800/60 px-1.5 py-0.5 rounded font-medium">
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                  {/* LEFT: manuscript editor */}
+                  <section className="lg:col-span-7 flex flex-col gap-6">
+                    <div className="bg-white border border-ink/5 rounded-2xl shadow-sm overflow-hidden">
+                      <div className="px-5 py-4 border-b border-ink/6 flex items-center justify-between gap-3 bg-cream-light/60">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-xl bg-ink text-cream flex items-center justify-center">
+                            <FileText className="w-3.5 h-3.5" />
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
+                            Manuscript
+                          </span>
                         </div>
 
-                        {/* Listen preview button */}
-                        <button
-                          type="button"
-                          disabled={isGenerating || testingVoiceId !== null}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleGenerateTTS(voice.sampleText, voice.id, true);
-                          }}
-                          className={`text-[10px] px-2.5 py-1 rounded-md border font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                            isTesting 
-                              ? "bg-indigo-600 text-white border-indigo-600" 
-                              : "bg-zinc-950 text-zinc-400 border-zinc-800 hover:bg-zinc-800"
-                          }`}
-                        >
-                          {isTesting ? (
-                            <div className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          ) : (
-                            <Play className="w-2.5 h-2.5 fill-current" />
-                          )}
-                          Sample
-                        </button>
+                        {inputText && (
+                          <button
+                            onClick={() => setInputText("")}
+                            className="text-[10px] font-black uppercase tracking-[0.15em] text-ink/40 hover:text-rose-dark transition-colors flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <ListRestart className="w-3.5 h-3.5" />
+                            Reset
+                          </button>
+                        )}
                       </div>
 
-                      <p className="mt-2 text-xs text-zinc-550 leading-normal font-sans">
-                        {voice.description}
-                      </p>
+                      {/* Preset templates rail */}
+                      <div className="px-5 py-3 border-b border-ink/6 flex items-center gap-2 overflow-x-auto hide-scrollbar bg-cream-light/40">
+                        <span className="text-[9px] font-black uppercase tracking-[0.25em] text-ink/35 flex-none">
+                          Templates:
+                        </span>
+                        {PRESETS.map((p) => (
+                          <button
+                            key={p.id}
+                            onClick={() => handleLoadPreset(p)}
+                            className="text-[10px] font-black uppercase tracking-[0.12em] bg-white hover:bg-ink hover:text-cream px-3.5 py-1.5 rounded-full text-ink/55 border border-ink/10 hover:border-ink transition-all flex-none cursor-pointer"
+                          >
+                            {p.title}
+                          </button>
+                        ))}
+                      </div>
 
-                      {isSelected && (
-                        <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      {/* Textarea */}
+                      <div className="relative">
+                        <textarea
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          placeholder="Begin typing your manuscript here..."
+                          rows={8}
+                          className="w-full p-5 sm:p-6 text-ink placeholder-ink/25 focus:outline-none text-base leading-relaxed resize-y border-none bg-transparent"
+                          maxLength={1000}
+                        />
+                        <div className="absolute bottom-3 right-4 font-mono text-[10px] text-ink/35 bg-white/90 px-2.5 py-1 rounded-full border border-ink/8">
+                          {inputText.length} / 1000
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* RIGHT: voice, action, player, history */}
+                  <section className="lg:col-span-5 flex flex-col gap-6">
+
+                    {/* Voice architecture (collapsible picker) */}
+                    <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
+                          Voice Architecture
+                        </h3>
+                        <span className="font-mono text-[10px] text-ink/30">
+                          {allVoices.length} voices
+                        </span>
+                      </div>
+
+                      {/* Selected voice summary */}
+                      <button
+                        onClick={() => setIsVoicePickerOpen(v => !v)}
+                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-ink/10 bg-cream-light/70 hover:border-ink/25 transition-all text-left cursor-pointer"
+                      >
+                        <span className="w-10 h-10 rounded-xl bg-ink text-cream flex items-center justify-center font-display font-black text-sm shrink-0">
+                          {selectedVoiceObj.name.charAt(0)}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="flex items-center gap-2 flex-wrap">
+                            <span className="font-display font-bold text-sm text-ink truncate">
+                              {selectedVoiceObj.name}
+                            </span>
+                            <span
+                              className={cx(
+                                "text-[8px] font-black uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-full border",
+                                selectedVoiceObj.gender === "female"
+                                  ? "bg-rose/25 text-rose-dark border-rose/40"
+                                  : "bg-ink/8 text-ink/60 border-ink/10"
+                              )}
+                            >
+                              {selectedVoiceObj.gender}
+                            </span>
+                          </span>
+                          <span className="block text-[10px] text-ink/40 font-medium truncate mt-0.5">
+                            {selectedVoiceObj.traits.join(" · ")}
+                          </span>
+                        </span>
+                        <ChevronDown
+                          className={cx(
+                            "w-4 h-4 text-ink/40 transition-transform shrink-0",
+                            isVoicePickerOpen && "rotate-180"
+                          )}
+                        />
+                      </button>
+
+                      {/* Expanded voice list */}
+                      <AnimatePresence initial={false}>
+                        {isVoicePickerOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <div className="pt-3 space-y-2 max-h-[340px] overflow-y-auto scrollbar-thin pr-1">
+                              {allVoices.map((voice) => {
+                                const isSelected = selectedVoice.id === voice.id;
+                                const isTesting = testingVoiceId === voice.id;
+
+                                return (
+                                  <div
+                                    key={voice.id}
+                                    onClick={() => setSelectedVoice(voice)}
+                                    className={cx(
+                                      "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all",
+                                      isSelected
+                                        ? "border-ink/25 bg-cream-light shadow-sm"
+                                        : "border-ink/6 bg-white hover:border-ink/15 hover:bg-cream/60"
+                                    )}
+                                  >
+                                    <span
+                                      className={cx(
+                                        "w-9 h-9 rounded-xl flex items-center justify-center font-display font-black text-xs shrink-0",
+                                        isSelected ? "bg-ink text-cream" : "bg-cream-dark text-ink/45"
+                                      )}
+                                    >
+                                      {voice.name.charAt(0)}
+                                    </span>
+
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-display font-bold text-sm text-ink truncate">
+                                          {voice.name}
+                                        </span>
+                                        <span
+                                          className={cx(
+                                            "text-[8px] font-black uppercase tracking-wider px-1.5 py-px rounded-full border",
+                                            voice.gender === "female"
+                                              ? "bg-rose/25 text-rose-dark border-rose/40"
+                                              : "bg-ink/8 text-ink/60 border-ink/10"
+                                          )}
+                                        >
+                                          {voice.gender}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {voice.traits.slice(0, 3).map(t => (
+                                          <span key={t} className="text-[8px] font-black uppercase tracking-wider text-ink/35 bg-cream-dark px-1.5 py-0.5 rounded-full">
+                                            {t}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      disabled={isGenerating || testingVoiceId !== null}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleGenerateTTS(voice.sampleText, voice.id, true);
+                                      }}
+                                      className={cx(
+                                        "text-[9px] font-black uppercase tracking-[0.15em] px-3 py-1.5 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer shrink-0",
+                                        isTesting
+                                          ? "bg-ink text-cream border-ink"
+                                          : "bg-white text-ink/50 border-ink/10 hover:border-ink/30 hover:text-ink",
+                                        (isGenerating || testingVoiceId !== null) && !isTesting && "opacity-40"
+                                      )}
+                                    >
+                                      {isTesting ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Play className="w-3 h-3 fill-current" />
+                                      )}
+                                      Sample
+                                    </button>
+
+                                    {isSelected && (
+                                      <span className="w-5 h-5 rounded-full bg-ink text-cream flex items-center justify-center shrink-0">
+                                        <Check className="w-3 h-3 stroke-[3]" />
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Speed + generate */}
+                    <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
+                          Playback Rate
+                        </label>
+                        <span className="font-mono text-xs font-semibold text-gold">
+                          {playbackSpeed.toFixed(2)}x
+                        </span>
+                      </div>
+                      <div className="flex gap-1.5 mb-4">
+                        {[0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+                          <button
+                            key={speed}
+                            onClick={() => setPlaybackSpeed(speed)}
+                            className={cx(
+                              "flex-1 text-[11px] font-black py-2 rounded-full border text-center transition-all cursor-pointer",
+                              playbackSpeed === speed
+                                ? "bg-ink text-cream border-ink"
+                                : "bg-white text-ink/45 border-ink/10 hover:border-ink/30 hover:text-ink"
+                            )}
+                          >
+                            {speed === 1.0 ? "1x" : `${speed}x`}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => handleGenerateTTS()}
+                        disabled={isGenerating || !inputText.trim()}
+                        className="w-full bg-ink text-cream py-3.5 px-6 rounded-full font-black text-[11px] tracking-[0.25em] uppercase shadow-lg shadow-ink/10 hover:bg-rose hover:text-ink active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed cursor-pointer text-center"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Synthesizing...
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-4 h-4" />
+                            Generate Speech
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Studio player */}
+                    <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5 relative overflow-hidden">
+                      <div className="absolute -top-12 -right-12 w-40 h-40 bg-rose/25 blur-3xl rounded-full pointer-events-none" />
+
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b border-ink/8">
+                          <div className="flex items-center gap-2">
+                            <Music className="w-4 h-4 text-gold" />
+                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-ink/45">
+                              Active Master Output
+                            </span>
+                          </div>
+
+                          {activeAudio && (
+                            <button
+                              onClick={() => {
+                                const isEdge = EDGE_TTS_VOICES.some(v => v.name === activeAudio.voiceName);
+                                downloadAudioFromBase64(activeAudio.audioContent, `${activeAudio.voiceName}_speech.${isEdge ? "mp3" : "wav"}`);
+                              }}
+                              className="text-gold text-[9px] font-black uppercase tracking-[0.15em] flex items-center gap-1.5 hover:text-rose-dark transition-colors cursor-pointer"
+                              title="Download speech file"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Download HQ
+                            </button>
+                          )}
+                        </div>
+
+                        {activeAudio ? (
+                          <div>
+                            {/* Track info */}
+                            <div className="mb-4">
+                              <h4 className="text-sm font-display font-bold text-ink truncate max-w-full">
+                                {activeAudio.title}
+                              </h4>
+                              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-ink/40 mt-1 font-mono">
+                                {activeAudio.voiceName} · {activeAudio.timestamp.split(" - ")[0]}
+                              </p>
+                            </div>
+
+                            {/* Waveform visualizer */}
+                            <div className="h-12 flex items-end justify-center gap-[2.5px] bg-cream-light rounded-xl px-4 py-2.5 mb-4 border border-ink/8">
+                              {Array.from({ length: 26 }).map((_, i) => {
+                                const randDuration = 0.5 + Math.random() * 0.8;
+                                return (
+                                  <div
+                                    key={i}
+                                    style={{
+                                      animationDuration: isPlaying ? `${randDuration}s` : '0s',
+                                      height: isPlaying ? `${15 + Math.random() * 25}px` : '4px'
+                                    }}
+                                    className={cx(
+                                      "w-1 rounded-full transition-all origin-bottom",
+                                      isPlaying ? "animate-wave-bar bg-gold" : "bg-ink/15"
+                                    )}
+                                  />
+                                );
+                              })}
+                            </div>
+
+                            {/* Seek timeline */}
+                            <div className="flex items-center gap-3 mb-4">
+                              <span className="text-[10px] font-mono text-ink/40 w-9 text-right">
+                                {formatTime(currentTime)}
+                              </span>
+                              <input
+                                type="range"
+                                min="0"
+                                max={duration || 100}
+                                step="0.01"
+                                value={currentTime}
+                                onChange={handleSeekChange}
+                                className="flex-1 accent-gold h-1 bg-ink/15 rounded-lg appearance-none cursor-pointer"
+                              />
+                              <span className="text-[10px] font-mono text-ink/40 w-9">
+                                {formatTime(duration)}
+                              </span>
+                            </div>
+
+                            {/* Transport controls */}
+                            <div className="flex items-center justify-center gap-5">
+                              <button
+                                onClick={toggleMute}
+                                className="p-2.5 text-ink/45 hover:text-ink transition-colors cursor-pointer"
+                                title={isMuted ? "Unmute" : "Mute"}
+                              >
+                                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                              </button>
+
+                              <button
+                                onClick={() => setIsPlaying(!isPlaying)}
+                                className="w-12 h-12 rounded-full bg-ink text-cream hover:bg-rose hover:text-ink flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer"
+                              >
+                                {isPlaying ? (
+                                  <Pause className="w-5 h-5 fill-current" />
+                                ) : (
+                                  <Play className="w-5 h-5 fill-current ml-0.5" />
+                                )}
+                              </button>
+
+                              <span className="text-[10px] font-mono font-bold text-ink/50 border border-ink/15 rounded-full px-2.5 py-1">
+                                {playbackSpeed.toFixed(2)}x
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="py-8 text-center flex flex-col items-center justify-center">
+                            <Volume2 className="w-8 h-8 text-ink/15 mb-3" />
+                            <p className="text-xs font-semibold text-ink/45">No active track generated yet</p>
+                            <p className="text-[10px] text-ink/30 mt-1.5">
+                              Input text and hit Generate Speech above
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Synthesized vault (history) */}
+                    <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5">
+                      <div className="flex items-center justify-between mb-4 pb-3 border-b border-ink/6">
+                        <div className="flex items-center gap-2">
+                          <History className="w-4 h-4 text-ink/35" />
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
+                            Synthesized Vault
+                          </h3>
+                          {history.length > 0 && (
+                            <span className="font-mono text-[9px] bg-cream-dark text-ink/45 px-1.5 py-0.5 rounded-full">
+                              {history.length}
+                            </span>
+                          )}
+                        </div>
+                        {history.length > 0 && (
+                          <button
+                            onClick={() => {
+                              saveHistory([]);
+                              showSuccessNotification("Vault cleared.");
+                            }}
+                            className="text-[9px] font-black uppercase tracking-[0.15em] text-ink/35 hover:text-rose-dark transition-all cursor-pointer"
+                          >
+                            Clear All
+                          </button>
+                        )}
+                      </div>
+
+                      {history.length > 0 ? (
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto scrollbar-thin pr-1">
+                          {history.map((item) => {
+                            const isActive = activeAudio?.id === item.id;
+                            return (
+                              <div
+                                key={item.id}
+                                onClick={() => handleLoadFromHistory(item)}
+                                className={cx(
+                                  "group p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3",
+                                  isActive
+                                    ? "border-ink/20 bg-cream-light"
+                                    : "border-ink/6 bg-white hover:border-ink/15 hover:bg-cream/60"
+                                )}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-bold text-ink truncate">
+                                    {item.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[8px] font-black uppercase tracking-wider text-ink/40 bg-cream-dark border border-ink/8 px-1.5 py-0.5 rounded-full truncate max-w-[110px]">
+                                      {item.voiceName}
+                                    </span>
+                                    <span className="text-[9px] font-mono text-ink/30">
+                                      {item.timestamp.split(" - ")[0]}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  {isActive && isPlaying ? (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-dark animate-ping" />
+                                  ) : null}
+
+                                  <button
+                                    onClick={(e) => handleDeleteHistoryItem(item.id, e)}
+                                    className="text-ink/25 hover:text-red-500 p-2 rounded-full hover:bg-cream-dark transition-colors cursor-pointer"
+                                    title="Delete file"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center text-ink/35 text-xs">
+                          Your vault is currently empty. Generated files appear here for easy
+                          playback and download.
                         </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* ACTION GENERATION CARD */}
-            <div className="bg-[#080808] border border-zinc-800 rounded-2xl p-5 shadow-sm">
-              
-              {/* Playback rate settings */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider font-mono">
-                    Playback Rate (Speed)
-                  </label>
-                  <span className="text-xs font-bold text-indigo-400 font-mono">{playbackSpeed.toFixed(2)}x</span>
+                  </section>
                 </div>
-                <div className="flex gap-1.5">
-                  {[0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
-                    <button
-                      key={speed}
-                      onClick={() => setPlaybackSpeed(speed)}
-                      className={`flex-1 text-xs py-1.5 rounded-lg border text-center transition-all cursor-pointer ${
-                        playbackSpeed === speed 
-                          ? "bg-indigo-600 text-white border-indigo-650 font-semibold" 
-                          : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-850"
-                      }`}
-                    >
-                      {speed === 1.0 ? "Normal" : `${speed}x`}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </>
+            )}
 
-              {/* Master Button to generate */}
-              <button
-                onClick={() => handleGenerateTTS()}
-                disabled={isGenerating || !inputText.trim()}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 px-6 rounded-xl font-bold text-sm tracking-widest shadow-lg shadow-indigo-500/10 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed cursor-pointer uppercase font-mono text-center"
-              >
-                {isGenerating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    SYNTHESIZING...
-                  </>
-                ) : (
-                  <>
-                    <Volume2 className="w-4.5 h-4.5" />
-                    GENERATE SPEECH
-                  </>
-                )}
-              </button>
-            </div>
+            {activeTab === "story" && (
+              <StoryStudio
+                allVoices={allVoices}
+                onNotify={(msg, isError) => isError ? showErrorNotification(msg) : showSuccessNotification(msg)}
+              />
+            )}
 
-            {/* HIGH FIDELITY CUSTOM AUDIO PLAYER */}
-            <div className="bg-[#080808] text-white border border-zinc-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
-              <div className="absolute inset-0 bg-radial-gradient from-indigo-500/10 via-transparent to-transparent opacity-60 pointer-events-none" />
-              
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-3.5 pb-3.5 border-b border-zinc-800/80">
-                  <div className="flex items-center gap-2">
-                     <Music className="w-4 h-4 text-indigo-400" />
-                     <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-zinc-550">
-                       Active Master Output
-                     </span>
-                  </div>
-
-                  {activeAudio && (
-                     <button
-                       onClick={() => {
-                         const isEdge = EDGE_TTS_VOICES.some(v => v.name === activeAudio.voiceName);
-                         downloadAudioFromBase64(activeAudio.audioContent, `${activeAudio.voiceName}_speech.${isEdge ? "mp3" : "wav"}`);
-                       }}
-                       className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-                       title="Download speech file"
-                     >
-                       <Download className="w-3.5 h-3.5" />
-                       Download HQ
-                     </button>
-                  )}
-                </div>
-
-                {activeAudio ? (
-                  <div>
-                    {/* Track info */}
-                    <div className="mb-4">
-                      <h4 className="text-sm font-bold text-white truncate max-w-full">
-                        {activeAudio.title}
-                      </h4>
-                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5 uppercase tracking-wider">
-                        Voice: {activeAudio.voiceName} • {activeAudio.timestamp.split(" - ")[0]}
-                      </p>
-                    </div>
-
-                    {/* Simple dynamic wave bar visualizer */}
-                    <div className="h-12 flex items-end justify-center gap-[2.5px] bg-[#050505] rounded-xl px-4 py-2.5 mb-4 border border-zinc-800">
-                      {Array.from({ length: 26 }).map((_, i) => {
-                        // Generate a pseudo-random animation duration
-                        const randDuration = 0.5 + Math.random() * 0.8;
-                        return (
-                          <div
-                            key={i}
-                            style={{
-                              animationDuration: isPlaying ? `${randDuration}s` : '0s',
-                              height: isPlaying ? `${15 + Math.random() * 25}px` : '4px'
-                            }}
-                            className={`w-1 rounded-full transition-all ${
-                              isPlaying ? "animate-wave-bar origin-bottom bg-indigo-500" : "bg-zinc-800"
-                            }`}
-                          />
-                        );
-                      })}
-                    </div>
-
-                    {/* Progress seeking timeline bar */}
-                    <div className="flex items-center gap-3.5 mb-4">
-                      <span className="text-[10px] text-zinc-500 font-mono w-8 text-right">
-                        {formatTime(currentTime)}
-                      </span>
-                      <input
-                        type="range"
-                        min="0"
-                        max={duration || 100}
-                        step="0.01"
-                        value={currentTime}
-                        onChange={handleSeekChange}
-                        className="flex-1 accent-indigo-500 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer"
-                      />
-                      <span className="text-[10px] text-zinc-500 font-mono w-8">
-                        {formatTime(duration)}
-                      </span>
-                    </div>
-
-                    {/* Primary play controllers */}
-                    <div className="flex items-center justify-center gap-5">
-                      <button
-                        onClick={toggleMute}
-                        className="p-2 text-zinc-500 hover:text-white transition-colors cursor-pointer"
-                        title={isMuted ? "Unmute" : "Mute"}
-                      >
-                        {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                      </button>
-
-                      <button
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="w-12 h-12 rounded-full bg-white hover:bg-zinc-100 hover:scale-105 active:scale-95 text-black flex items-center justify-center shadow-lg transition-all cursor-pointer"
-                      >
-                        {isPlaying ? (
-                          <Pause className="w-5 h-5 fill-current text-black" />
-                        ) : (
-                          <Play className="w-5 h-5 fill-current text-black ml-0.5" />
-                        )}
-                      </button>
-
-                      <span className="text-[10px] bg-zinc-900 text-zinc-400 border border-zinc-800 font-mono px-2 py-1 rounded font-bold">
-                        {playbackSpeed.toFixed(2)}x
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-8 text-center text-zinc-600 flex flex-col items-center justify-center">
-                    <Volume2 className="w-8 h-8 text-zinc-800 mb-2 animate-pulse" />
-                    <p className="text-xs">No active track generated yet</p>
-                    <p className="text-[10px] text-zinc-700 mt-1">Input text and click Synthesize Speech above</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* SAVED VAULT (HISTORY) */}
-            <div className="bg-[#080808] border border-zinc-800 rounded-2xl shadow-sm p-5">
-              <div className="flex items-center justify-between mb-3 pb-3 border-b border-zinc-800/80">
-                <div className="flex items-center gap-2 text-zinc-300">
-                  <History className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-[10px] font-bold uppercase tracking-widest font-mono">
-                    Synthesized Vault
-                  </h3>
-                </div>
-                {history.length > 0 && (
-                  <button
-                    onClick={() => {
-                      saveHistory([]);
-                      showSuccessNotification("Vault cleared.");
-                    }}
-                    className="text-[10px] text-zinc-500 hover:text-red-400 transition-all font-medium cursor-pointer"
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
-
-              {history.length > 0 ? (
-                <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
-                  {history.map((item) => {
-                    const isActive = activeAudio?.id === item.id;
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => handleLoadFromHistory(item)}
-                        className={`group p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 ${
-                          isActive 
-                            ? "border-indigo-500/30 bg-indigo-500/10" 
-                            : "border-zinc-800 bg-[#050505]/60 hover:border-zinc-700"
-                        }`}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-zinc-200 truncate">
-                            {item.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono font-medium">
-                              Voice: {item.voiceName}
-                            </span>
-                            <span className="text-[9px] text-zinc-500 font-mono">
-                              {item.timestamp.split(" - ")[0]}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          {/* Play state visual */}
-                          {isActive && isPlaying ? (
-                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
-                          ) : null}
-
-                          <button
-                            onClick={(e) => handleDeleteHistoryItem(item.id, e)}
-                            className="text-zinc-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-zinc-900 transition-colors cursor-pointer"
-                            title="Delete file"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-6 text-center text-zinc-600 text-xs">
-                  Your vault is currently empty. Generated files appear here for easy playback and download.
-                </div>
-              )}
-            </div>
-
-          </section>
-
-        </div>
-          </>
-        )}
-
-        {activeTab === "story" && (
-          <StoryStudio 
-            allVoices={allVoices}
-            onNotify={(msg, isError) => isError ? showErrorNotification(msg) : showSuccessNotification(msg)} 
-          />
-        )}
-
-        {activeTab === "clone" && (
-          <VoiceCloneStudio 
-            customVoices={customVoices}
-            onAddVoice={handleAddCustomVoice}
-            onDeleteVoice={handleDeleteCustomVoice}
-            onNotify={(msg, isError) => isError ? showErrorNotification(msg) : showSuccessNotification(msg)}
-          />
-        )}
-
+            {activeTab === "clone" && (
+              <VoiceCloneStudio
+                customVoices={customVoices}
+                onAddVoice={handleAddCustomVoice}
+                onDeleteVoice={handleDeleteCustomVoice}
+                onNotify={(msg, isError) => isError ? showErrorNotification(msg) : showSuccessNotification(msg)}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-zinc-800 bg-[#080808] mt-16 py-8 text-center text-[10px] text-zinc-600 uppercase tracking-widest font-mono">
-        <div className="max-w-7xl mx-auto px-4">
-          <p>© 2026 VoxGenesis Speech Generator. Powered by Microsoft Edge Neural TTS.</p>
+      {/* ── Footer ─────────────────────────────────────────────────────── */}
+      <footer className="bg-cream-dark border-t border-ink/8 text-ink mt-16 sm:mt-24 pt-14 pb-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pb-10 border-b border-ink/8">
+            {/* Brand */}
+            <div className="col-span-2 md:col-span-1 max-w-xs">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-7 h-7 rounded-full bg-ink text-cream flex items-center justify-center">
+                  <Volume2 size={14} />
+                </span>
+                <span className="font-display text-xs font-black tracking-[0.2em] uppercase">
+                  Vox·Genesis
+                </span>
+              </div>
+              <p className="text-xs text-ink/45 leading-relaxed">
+                Editorial-grade speech synthesis for scripts, stories, and custom voices.
+              </p>
+            </div>
+
+            {/* Studios (functional) */}
+            <div>
+              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
+                Studios
+              </p>
+              <ul className="space-y-2.5">
+                {TABS.map(tab => (
+                  <li key={tab.id}>
+                    <button
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="text-xs text-ink/55 hover:text-ink transition-colors cursor-pointer"
+                    >
+                      {tab.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Engine */}
+            <div>
+              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
+                Engine
+              </p>
+              <ul className="space-y-2.5 text-xs text-ink/55">
+                <li>Edge Neural TTS</li>
+                <li>Azure Speech fallback</li>
+                <li>Web Audio merging</li>
+              </ul>
+            </div>
+
+            {/* Formats */}
+            <div>
+              <p className="text-[9px] font-black tracking-[0.3em] uppercase text-ink/40 mb-4">
+                Formats
+              </p>
+              <ul className="space-y-2.5 text-xs text-ink/55">
+                <li>MP3 input · 24 kHz mono</li>
+                <li>WAV master export</li>
+                <li>Per-block trimming</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[10px] text-ink/35 text-center sm:text-left">
+              © {new Date().getFullYear()} VoxGenesis Speech Generator
+              {session ? ` · Signed in as ${session.name}` : ""}
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-dark" />
+              <span className="text-[10px] font-black tracking-[0.2em] uppercase text-ink/40">
+                Powered by Microsoft Edge Neural TTS
+              </span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

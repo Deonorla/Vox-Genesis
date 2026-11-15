@@ -20,8 +20,16 @@ try {
   const possiblePaths = [
     "/usr/local/bin/edge-tts",
     "/usr/bin/edge-tts",
-    "/Users/deonorla/Library/Python/3.9/bin/edge-tts",
+    // Linux user-level pip installs
+    path.join(os.homedir(), ".local/bin/edge-tts"),
   ];
+  // macOS user-level pip installs: ~/Library/Python/<version>/bin/edge-tts
+  try {
+    const userPythonDir = path.join(os.homedir(), "Library", "Python");
+    for (const ver of fs.readdirSync(userPythonDir)) {
+      possiblePaths.push(path.join(userPythonDir, ver, "bin", "edge-tts"));
+    }
+  } catch {}
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) {
       edgeTtsPath = p;
@@ -47,8 +55,16 @@ try {
 //   AZURE_TTS_URL        - full endpoint override (sovereign clouds / testing)
 //   EDGE_TTS_DISABLED    - "true" to skip edge-tts entirely and always use Azure
 // ---------------------------------------------------------------------------
-const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY?.trim();
-const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION?.trim();
+// Read an env var, stripping surrounding quotes/whitespace (values pasted into
+// a hosting dashboard like Render may include literal quotes, which would make
+// Azure reject the key with 401).
+function cleanEnv(value: string | undefined): string | undefined {
+  const cleaned = value?.trim().replace(/^["'](.*)["']$/, "$1").trim();
+  return cleaned || undefined;
+}
+
+const AZURE_SPEECH_KEY = cleanEnv(process.env.AZURE_SPEECH_KEY);
+const AZURE_SPEECH_REGION = cleanEnv(process.env.AZURE_SPEECH_REGION);
 const EDGE_TTS_DISABLED = process.env.EDGE_TTS_DISABLED === "true";
 
 const azureFallbackEnabled = Boolean(AZURE_SPEECH_KEY && AZURE_SPEECH_REGION);
@@ -71,6 +87,16 @@ function escapeXml(value: string): string {
 
 /** Extract a short, log-friendly message from an error (drops long tracebacks). */
 function shortError(err: unknown): string {
+  // execFile failures put the real cause (e.g. WSServerHandshakeError: 403) in
+  // stderr; err.message only starts with "Command failed: <cmd>", which hides it.
+  const stderr = typeof (err as { stderr?: unknown })?.stderr === "string"
+    ? (err as { stderr: string }).stderr.trim()
+    : "";
+  if (stderr) {
+    const lines = stderr.split("\n").map((l) => l.trim()).filter(Boolean);
+    const last = lines[lines.length - 1];
+    if (last) return last.slice(0, 200);
+  }
   const message = err instanceof Error ? err.message : String(err);
   const firstLine = message.split("\n")[0]?.trim();
   return firstLine || message;
@@ -131,8 +157,11 @@ async function synthesizeWithAzure(text: string, voiceName: string): Promise<Buf
 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
+    const hint = res.status === 401 || res.status === 403
+      ? " — the key/region is wrong or mismatched: both must come from the same Azure Speech resource (Portal > Speech service > Keys & Endpoint)"
+      : "";
     throw new Error(
-      `Azure TTS request failed (${res.status} ${res.statusText})${detail ? `: ${detail.slice(0, 300)}` : ""}`,
+      `Azure TTS request failed (${res.status} ${res.statusText})${hint}${detail ? `: ${detail.slice(0, 300)}` : ""}`,
     );
   }
 

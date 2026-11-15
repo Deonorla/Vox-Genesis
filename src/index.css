@@ -1,14 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800;1,900&family=Manrope:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @import "tailwindcss";
 
+/* ── Design tokens (editorial style, adapted from Mezoshop) ─────────────── */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
-  --font-serif: "Playfair Display", Georgia, serif;
+  --font-display: "Epilogue", "Inter", sans-serif;
+  --font-sans: "Manrope", "Inter", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-cream: #fff8f2;
+  --color-cream-light: #f9f2ec;
+  --color-cream-dark: #f3ede7;
+  --color-ink: #1e1b18;
+  --color-rose: #e8b4b8;
+  --color-rose-dark: #7c5357;
+  --color-gold: #745a27;
 }
 
-/* Custom visualizer animation */
+@layer base {
+  body {
+    @apply bg-cream text-ink font-sans antialiased selection:bg-rose/40 selection:text-ink;
+  }
+}
+
+/* Horizontal chip/carousel rails without visible scrollbars */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Slim scrollbars for list panels */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(30 27 24 / 0.15);
+  border-radius: 999px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Audio visualizer bars */
 @keyframes wave-grow {
   0%, 100% { transform: scaleY(0.3); }
   50% { transform: scaleY(1); }

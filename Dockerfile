@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install edge-tts globally (--break-system-packages for Python 3.11+)
-RUN pip3 install --break-system-packages edge-tts
+# Pinned: 7.3.0+ fixes Microsoft's Oct 2026 Sec-MS-GEC v2 change (403 handshake
+# errors, rany2/edge-tts#490). Bumping this line also invalidates Docker's layer
+# cache so new deploys always pick up the current fix.
+RUN pip3 install --break-system-packages edge-tts==7.3.1
 
 # Set working directory
 WORKDIR /app

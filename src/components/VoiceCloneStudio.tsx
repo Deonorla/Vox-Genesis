@@ -1,20 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { 
-  Upload, 
-  Mic, 
-  Square, 
-  Play, 
-  Pause, 
-  Trash2, 
-  Sparkles, 
-  Loader2, 
-  Volume2, 
-  Plus, 
-  Check, 
-  User, 
-  VolumeX,
-  FileAudio,
-  AlertCircle
+import {
+  Upload,
+  Mic,
+  Square,
+  Play,
+  Pause,
+  Trash2,
+  Sparkles,
+  Loader2,
+  FileAudio
 } from "lucide-react";
 import { Voice } from "../types";
 import { EDGE_TTS_VOICES } from "../data";
@@ -49,7 +43,7 @@ export default function VoiceCloneStudio({
 
   // Playback state for uploaded/recorded reference audio
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -101,7 +95,7 @@ export default function VoiceCloneStudio({
         setAudioBase64(base64);
         setAudioFileName("Live Recording Voice Sample");
         onNotify("Voice sample recorded successfully.");
-        
+
         // Stop all tracks to release mic
         stream.getTracks().forEach(track => track.stop());
       };
@@ -278,28 +272,32 @@ export default function VoiceCloneStudio({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-      
+
       {/* LEFT SIDE: CREATOR PANEL */}
       <section className="lg:col-span-7 flex flex-col gap-6">
-        <div className="bg-[#080808] border border-zinc-800 rounded-2xl shadow-sm p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl -z-0 opacity-40 pointer-events-none" />
-          
+        <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-6 sm:p-8 relative overflow-hidden">
+          <div className="absolute -top-12 -right-12 w-44 h-44 bg-rose/25 blur-3xl rounded-full pointer-events-none" />
+
           <div className="relative z-10">
-            <div className="flex items-center gap-2.5 mb-2">
-              <Sparkles className="w-5 h-5 text-pink-400" />
-              <h2 className="text-xl font-serif italic text-white leading-tight">
-                Register Custom Voice Signature
-              </h2>
+            {/* Editorial heading */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-dark">
+                Voice Clone Studio
+              </span>
             </div>
-            <p className="text-xs text-zinc-400 max-w-xl leading-relaxed mb-6">
+            <h2 className="font-display font-black text-2xl sm:text-3xl leading-tight tracking-tight text-ink">
+              Register your <em className="italic text-gold">voice signature.</em>
+            </h2>
+            <p className="mt-3 mb-6 text-sm text-ink/55 max-w-xl leading-relaxed">
               Create a synthetic voice model from any clear vocal recording. Select a base voice to match gender, frequency range, and tone, then generate speech using your custom cloned profile.
             </p>
 
             <div className="space-y-5">
-              
+
               {/* Voice Name */}
               <div>
-                <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                   Voice Profile Name
                 </label>
                 <input
@@ -307,26 +305,26 @@ export default function VoiceCloneStudio({
                   placeholder="e.g. My Private Podcast Vocal"
                   value={voiceName}
                   onChange={(e) => setVoiceName(e.target.value)}
-                  className="w-full bg-[#040404] border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-pink-500/40"
+                  className="w-full bg-cream/70 border border-ink/10 rounded-full px-5 py-3 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all"
                 />
               </div>
 
               {/* Grid selectors */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* Gender */}
                 <div>
-                  <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                     Biological Model Gender
                   </label>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => setGender("female")}
-                      className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-all ${
+                      className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all cursor-pointer ${
                         gender === "female"
-                          ? "bg-pink-500/10 border-pink-500/40 text-pink-400"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                          ? "bg-rose/30 border-rose text-rose-dark"
+                          : "bg-white border-ink/10 text-ink/45 hover:border-ink/30"
                       }`}
                     >
                       Female Tone
@@ -334,10 +332,10 @@ export default function VoiceCloneStudio({
                     <button
                       type="button"
                       onClick={() => setGender("male")}
-                      className={`flex-1 py-2 rounded-xl text-xs font-medium border cursor-pointer transition-all ${
+                      className={`flex-1 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border transition-all cursor-pointer ${
                         gender === "male"
-                          ? "bg-blue-500/10 border-blue-500/40 text-blue-400"
-                          : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300"
+                          ? "bg-ink text-cream border-ink"
+                          : "bg-white border-ink/10 text-ink/45 hover:border-ink/30"
                       }`}
                     >
                       Male Tone
@@ -347,16 +345,16 @@ export default function VoiceCloneStudio({
 
                 {/* Base Acoustic Carrier Profile */}
                 <div>
-                  <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                  <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                     Acoustic Carrier Profile
                   </label>
                   <select
                     value={baseVoiceId}
                     onChange={(e) => setBaseVoiceId(e.target.value)}
-                    className="w-full bg-[#040404] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-pink-500/40 cursor-pointer"
+                    className="w-full bg-white border border-ink/10 rounded-full px-4 py-2.5 text-sm text-ink focus:outline-none cursor-pointer"
                   >
                     {EDGE_TTS_VOICES.filter(v => v.gender === gender).map(v => (
-                      <option key={v.id} value={v.id} className="bg-zinc-950 text-zinc-300">
+                      <option key={v.id} value={v.id}>
                         {v.name} Base ({v.traits.slice(0, 2).join(", ")})
                       </option>
                     ))}
@@ -366,28 +364,28 @@ export default function VoiceCloneStudio({
               </div>
 
               {/* Sample Recording & Upload Workspace */}
-              <div className="bg-[#040404] border border-zinc-850 rounded-2xl p-4">
-                <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-3">
+              <div className="bg-cream-light border border-ink/5 rounded-2xl p-4">
+                <span className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-3">
                   Biological Vocal Input Source
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  
+
                   {/* Option 1: Live Record */}
-                  <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-950/40 flex flex-col items-center justify-center text-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                      <Mic className={`w-4 h-4 ${isRecording ? "text-red-500 animate-pulse" : "text-zinc-400"}`} />
+                  <div className="bg-white border border-ink/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white border border-ink/10 flex items-center justify-center">
+                      <Mic className={`w-4 h-4 ${isRecording ? "text-red-500 animate-pulse" : "text-ink/45"}`} />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-300">Live Voice Record</h4>
-                      <p className="text-[10px] text-zinc-500 mt-1">Speak into your mic for 5-10 seconds</p>
+                      <h4 className="font-display font-bold text-sm text-ink">Live Voice Record</h4>
+                      <p className="text-[10px] text-ink/45 mt-1">Speak into your mic for 5-10 seconds</p>
                     </div>
 
                     {isRecording ? (
                       <button
                         type="button"
                         onClick={stopRecording}
-                        className="text-xs font-semibold bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                        className="text-[10px] font-black uppercase tracking-[0.15em] bg-red-600 hover:bg-red-500 text-cream px-4 py-2.5 rounded-full flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <Square className="w-3.5 h-3.5 fill-current" />
                         Stop ({formatTime(recordDuration)})
@@ -396,22 +394,22 @@ export default function VoiceCloneStudio({
                       <button
                         type="button"
                         onClick={startRecording}
-                        className="text-xs font-semibold bg-zinc-900 border border-zinc-800 hover:border-zinc-750 text-zinc-300 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+                        className="bg-white border border-ink/10 text-ink/55 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 hover:border-ink/30 hover:text-ink transition-all cursor-pointer flex items-center gap-1.5"
                       >
-                        <Mic className="w-3.5 h-3.5 text-pink-400" />
+                        <Mic className="w-3.5 h-3.5 text-rose-dark" />
                         Record Audio
                       </button>
                     )}
                   </div>
 
                   {/* Option 2: Upload audio */}
-                  <div className="border border-zinc-800 rounded-xl p-4 bg-zinc-950/40 flex flex-col items-center justify-center text-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                      <Upload className="w-4 h-4 text-zinc-400" />
+                  <div className="bg-white border border-ink/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white border border-ink/10 flex items-center justify-center">
+                      <Upload className="w-4 h-4 text-ink/45" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-zinc-300">Acoustic File Upload</h4>
-                      <p className="text-[10px] text-zinc-500 mt-1">WAV, MP3, or M4A file under 15MB</p>
+                      <h4 className="font-display font-bold text-sm text-ink">Acoustic File Upload</h4>
+                      <p className="text-[10px] text-ink/45 mt-1">WAV, MP3, or M4A file under 15MB</p>
                     </div>
 
                     <input
@@ -424,9 +422,9 @@ export default function VoiceCloneStudio({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs font-semibold bg-zinc-900 border border-zinc-800 hover:border-zinc-750 text-zinc-300 px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="bg-white border border-ink/10 text-ink/55 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 hover:border-ink/30 hover:text-ink transition-all cursor-pointer flex items-center gap-1.5"
                     >
-                      <Upload className="w-3.5 h-3.5 text-pink-400" />
+                      <Upload className="w-3.5 h-3.5 text-rose-dark" />
                       Upload WAV/MP3
                     </button>
                   </div>
@@ -435,26 +433,26 @@ export default function VoiceCloneStudio({
 
                 {/* Display Loaded Sample */}
                 {audioBase64 && (
-                  <div className="mt-4 p-3 bg-zinc-900/60 border border-zinc-800 rounded-xl flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileAudio className="w-4 h-4 text-pink-400 flex-none" />
+                  <div className="mt-4 p-3 bg-white border border-ink/5 rounded-xl flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <FileAudio className="w-4 h-4 text-rose-dark flex-none" />
                       <div className="min-w-0">
-                        <span className="block text-xs font-semibold text-zinc-300 truncate">
+                        <span className="block text-xs font-semibold text-ink truncate">
                           {audioFileName}
                         </span>
-                        <span className="block text-[9px] text-zinc-500 font-mono uppercase">
+                        <span className="block text-[9px] text-ink/40 font-mono uppercase tracking-wider">
                           Acoustic Print Loaded
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-none">
                       <button
                         type="button"
                         onClick={handlePlayUnsavedSample}
-                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                        className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           playingVoiceId === "unsaved"
-                            ? "bg-pink-600 border-pink-500 text-white"
-                            : "bg-zinc-950 border-zinc-850 text-zinc-400 hover:text-white"
+                            ? "bg-ink text-cream border-ink"
+                            : "bg-white border-ink/10 text-ink/45 hover:text-ink hover:border-ink/30"
                         }`}
                         title="Play Sample Voice"
                       >
@@ -471,7 +469,7 @@ export default function VoiceCloneStudio({
                           setAudioFileName(null);
                           onNotify("Voice sample cleared.");
                         }}
-                        className="p-1.5 rounded-lg border border-zinc-850 bg-zinc-950 text-zinc-500 hover:text-red-400 cursor-pointer"
+                        className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-red-500 hover:border-red-500/40 transition-all cursor-pointer"
                         title="Clear Sample"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -483,20 +481,20 @@ export default function VoiceCloneStudio({
 
               {/* Tags/Traits Customizer */}
               <div>
-                <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                   Acoustic Descriptor Tags
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-2.5">
                   {traits.map(t => (
-                    <span 
-                      key={t} 
-                      className="text-xs bg-zinc-900 border border-zinc-800/80 rounded-full px-3 py-1 flex items-center gap-1.5 text-zinc-400 font-medium"
+                    <span
+                      key={t}
+                      className="bg-cream-dark border border-ink/10 text-ink/55 rounded-full px-3 py-1 text-xs flex items-center gap-1.5"
                     >
                       {t}
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => handleRemoveTrait(t)}
-                        className="text-[10px] text-zinc-500 hover:text-red-400"
+                        className="text-ink/40 hover:text-red-500 transition-colors cursor-pointer leading-none"
                       >
                         ×
                       </button>
@@ -510,12 +508,12 @@ export default function VoiceCloneStudio({
                     value={newTrait}
                     onChange={(e) => setNewTrait(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTrait())}
-                    className="flex-1 bg-[#040404] border border-zinc-800 rounded-xl px-4 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-pink-500/40"
+                    className="flex-1 min-w-0 bg-cream/70 border border-ink/10 rounded-full px-5 py-3 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all"
                   />
                   <button
                     type="button"
                     onClick={handleAddTrait}
-                    className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium rounded-xl px-4 text-xs cursor-pointer"
+                    className="flex-none bg-white border border-ink/10 text-ink/55 rounded-full text-[10px] font-black tracking-[0.15em] uppercase px-4 py-2.5 hover:border-ink/30 hover:text-ink transition-all cursor-pointer"
                   >
                     Add tag
                   </button>
@@ -524,7 +522,7 @@ export default function VoiceCloneStudio({
 
               {/* Description */}
               <div>
-                <label className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-2">
+                <label className="block text-[10px] font-black uppercase tracking-[0.25em] text-ink/45 mb-2">
                   Voice Profile Description
                 </label>
                 <textarea
@@ -532,7 +530,7 @@ export default function VoiceCloneStudio({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
-                  className="w-full bg-[#040404] border border-zinc-800 rounded-xl p-3.5 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-pink-500/40 resize-y"
+                  className="w-full bg-cream/70 border border-ink/10 rounded-2xl px-5 py-4 text-sm text-ink placeholder:text-ink/25 focus:outline-none focus:border-ink/30 focus:bg-white transition-all resize-y"
                 />
               </div>
 
@@ -541,7 +539,7 @@ export default function VoiceCloneStudio({
                 type="button"
                 onClick={handleCloneVoice}
                 disabled={isCloning}
-                className="w-full bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-pink-500/10 cursor-pointer uppercase font-mono tracking-wider"
+                className="w-full bg-ink text-cream rounded-full text-[10px] font-black tracking-[0.2em] uppercase px-5 py-3 hover:bg-rose hover:text-ink transition-all active:scale-[0.98] disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isCloning ? (
                   <>
@@ -563,10 +561,15 @@ export default function VoiceCloneStudio({
 
       {/* RIGHT SIDE: VAULT / COLLECTION */}
       <section className="lg:col-span-5 flex flex-col gap-6">
-        <div className="bg-[#080808] border border-zinc-800 rounded-2xl shadow-sm p-5 min-h-[400px] flex flex-col">
-          <h3 className="text-[11px] uppercase tracking-[0.15em] text-zinc-500 mb-4 font-mono">
-            Cloned Voices Vault ({customVoices.length})
-          </h3>
+        <div className="bg-white border border-ink/5 rounded-2xl shadow-sm p-5 min-h-[400px] flex flex-col">
+          <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-ink/6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-ink/45">
+              Cloned Voices Vault
+            </h3>
+            <span className="font-mono text-[9px] bg-rose/25 text-rose-dark border border-rose/40 px-1.5 py-0.5 rounded-full">
+              {customVoices.length}
+            </span>
+          </div>
 
           <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 max-h-[550px] scrollbar-thin">
             {customVoices.map((voice) => {
@@ -574,32 +577,34 @@ export default function VoiceCloneStudio({
               return (
                 <div
                   key={voice.id}
-                  className="border border-pink-500/10 bg-pink-500/[0.02] hover:border-pink-500/20 rounded-xl p-4 transition-all relative group"
+                  className="bg-white border border-ink/10 rounded-xl p-4 transition-all hover:border-rose/40 hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center text-xs font-bold font-mono">
+                      <div className="w-9 h-9 rounded-xl bg-rose/25 text-rose-dark font-display font-black text-xs flex items-center justify-center shrink-0">
                         {voice.name.charAt(0)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-white truncate max-w-[120px] sm:max-w-none">
+                          <span className="font-display font-bold text-sm text-ink truncate max-w-[120px] sm:max-w-none">
                             {voice.name}
                           </span>
-                          <span className={`text-[9px] uppercase font-mono px-1.5 py-0.5 rounded font-bold tracking-wider ${
-                            voice.gender === 'female' ? "bg-pink-500/10 text-pink-400 border border-pink-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          <span className={`text-[8px] font-black uppercase tracking-[0.18em] px-1.5 py-0.5 rounded-full border ${
+                            voice.gender === 'female'
+                              ? "bg-rose/25 text-rose-dark border-rose/40"
+                              : "bg-ink/8 text-ink/60 border-ink/10"
                           }`}>
                             {voice.gender}
                           </span>
-                          <span className="text-[8px] font-mono text-zinc-500 bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800">
+                          <span className="font-mono text-[8px] text-ink/45 bg-cream-dark border border-ink/10 px-1.5 py-0.5 rounded-full">
                             Base: {voice.baseVoiceId}
                           </span>
                         </div>
-                        
+
                         {/* Tags */}
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {voice.traits.map(t => (
-                            <span key={t} className="text-[9px] bg-zinc-950 text-zinc-500 border border-zinc-850 px-1.5 py-0.5 rounded font-medium">
+                            <span key={t} className="text-[9px] bg-cream-dark border border-ink/10 text-ink/45 px-1.5 py-0.5 rounded-full">
                               {t}
                             </span>
                           ))}
@@ -612,10 +617,10 @@ export default function VoiceCloneStudio({
                       <button
                         type="button"
                         onClick={() => handlePlaySample(voice)}
-                        className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                        className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           isPlaying
-                            ? "bg-pink-600 border-pink-500 text-white"
-                            : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
+                            ? "bg-ink text-cream border-ink"
+                            : "bg-white border-ink/10 text-ink/45 hover:text-ink hover:border-ink/30"
                         }`}
                         title="Listen to original sample vocal"
                       >
@@ -628,7 +633,7 @@ export default function VoiceCloneStudio({
                       <button
                         type="button"
                         onClick={() => onDeleteVoice(voice.id)}
-                        className="p-1.5 rounded-lg border border-zinc-850 bg-zinc-950 text-zinc-500 hover:text-red-400 transition-all cursor-pointer"
+                        className="w-9 h-9 rounded-full border border-ink/10 bg-white flex items-center justify-center text-ink/45 hover:text-red-500 hover:border-red-500/40 transition-all cursor-pointer"
                         title="Delete dynamic voice profile"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -636,7 +641,7 @@ export default function VoiceCloneStudio({
                     </div>
                   </div>
 
-                  <p className="mt-3 text-xs text-zinc-450 leading-relaxed italic bg-zinc-950/40 p-2.5 rounded-lg border border-zinc-900/40">
+                  <p className="mt-3 text-xs italic text-ink/55 leading-relaxed bg-cream-light border border-ink/5 rounded-xl p-3">
                     &ldquo;{voice.description}&rdquo;
                   </p>
                 </div>
@@ -644,10 +649,12 @@ export default function VoiceCloneStudio({
             })}
 
             {customVoices.length === 0 && (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-zinc-850 rounded-xl bg-zinc-950/20 py-16">
-                <Mic className="w-8 h-8 text-zinc-700 mb-2.5 animate-pulse" />
-                <h4 className="text-xs font-bold text-zinc-450 mb-1">Your Voice Vault is Empty</h4>
-                <p className="text-[10px] text-zinc-650 max-w-xs">
+              <div className="flex flex-col items-center justify-center text-center border border-dashed border-ink/15 rounded-2xl bg-cream-light/60 px-6 py-16">
+                <Mic className="w-8 h-8 text-ink/20 mb-2.5 animate-pulse" />
+                <h4 className="font-display font-bold text-sm text-ink/70 mb-1.5">
+                  Your Voice Vault is Empty
+                </h4>
+                <p className="text-[10px] text-ink/45 max-w-xs leading-relaxed">
                   Speak or upload an audio sample to extract and clone custom voice prints that you can immediately use inside Script Studio and Story Architect.
                 </p>
               </div>
